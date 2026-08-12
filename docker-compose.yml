@@ -3,11 +3,12 @@ version: '3.8'
 services:
   # Your Custom Game Application
   game:
-    image: my-fair-coinflip:latest
+    build: .
+    image: asset-dual:latest
     networks:
       - game-net
     volumes:
-      - coinflip-data:/app/data
+      - game-data:/app/data
     # By entirely omitting the 'ports' section here, we guarantee this 
     # container is 100% isolated from your host machine's network.
     # It cannot conflict with any existing services.
