@@ -15,7 +15,7 @@ export function useGameWebSocket(playerId) {
     winner: null,
     loser: null,
     flipResult: null,
-    flipHistory: [], // Tracks the secret table data
+    flipHistory: [],
   });
 
   const [lifetimeStats, setLifetimeStats] = useState({});
@@ -24,16 +24,15 @@ export function useGameWebSocket(playerId) {
   useEffect(() => {
     if (!playerId) return;
 
-    // Connect using the same domain/port the browser is currently on
+    // Bulletproof string concatenation (no backticks needed)
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const wsUrl = protocol + '//' + window.location.host + '/ws';
 
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
       setGameState(prev => ({ ...prev, statusMessage: 'Connected. Joining room...' }));
-      // Slight delay to ensure connection stabilizes before joining
       setTimeout(() => ws.send(JSON.stringify({ type: 'join', player_id: playerId })), 300);
     };
 
@@ -46,7 +45,7 @@ export function useGameWebSocket(playerId) {
             ...prev,
             roles: message.roles,
             myRole: message.roles[playerId] || null,
-            flipResult: null // Reset the coin
+            flipResult: null
           }));
           break;
 
@@ -84,13 +83,12 @@ export function useGameWebSocket(playerId) {
             statusMessage: 'Flipping... 🪙'
           }));
 
-          // ADDED: Hide the result and build suspense after the coin finishes spinning!
           setTimeout(() => {
             setGameState(prev => {
               if (prev.flipResult) {
                 return {
                   ...prev,
-                  statusMessage: `Flip complete! Result secretly recorded 🤫. Ready for next toss...`
+                  statusMessage: 'Flip complete! Result secretly recorded 🤫. Ready for next toss...'
                 };
               }
               return prev;
@@ -106,7 +104,6 @@ export function useGameWebSocket(playerId) {
             winner: message.winner,
             loser: message.loser,
             scores: message.scores,
-            // ADDED: Capture the history array sent from the backend
             flipHistory: message.history || []
           }));
           break;
@@ -140,7 +137,6 @@ export function useGameWebSocket(playerId) {
     return () => ws.close();
   }, [playerId]);
 
-  // Helper function to derive the right status text
   const getStatusMessage = (msg, myRole) => {
     if (!msg.game_started) return 'Waiting for other player...';
     if (msg.resolution_pending) return 'Game frozen for resolution...';
@@ -153,7 +149,6 @@ export function useGameWebSocket(playerId) {
     }
   };
 
-  // --- Methods to send data back to the server ---
   const sendGuess = useCallback((choice) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'guess', choice }));
