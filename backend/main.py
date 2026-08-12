@@ -29,7 +29,6 @@ def get_ist_now():
     return datetime.now(IST)
 
 # ---------- Database ----------
-
 def get_db():
     os.makedirs(DB_DIR, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
@@ -38,8 +37,6 @@ def get_db():
 
 def init_db():
     conn = get_db()
-
-    # 1. Users table (Base schema)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
@@ -50,14 +47,10 @@ def init_db():
             ties INTEGER NOT NULL DEFAULT 0
         )
     """)
-
-    # Phase 1 Upgrade: Force-add the play time column to old databases
     try:
         conn.execute("ALTER TABLE users ADD COLUMN total_play_time_seconds INTEGER NOT NULL DEFAULT 0")
     except sqlite3.OperationalError:
-        pass # The column already exists, safe to ignore
-
-    # 2. Transactions table
+        pass
     conn.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,8 +61,6 @@ def init_db():
             timestamp_ist TEXT NOT NULL
         )
     """)
-
-    # 3. Sessions table
     conn.execute("""
         CREATE TABLE IF NOT EXISTS sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -162,7 +153,6 @@ def record_session(username: str, start_time: datetime, end_time: datetime, dura
 init_db()
 
 # ---------- Auth API ----------
-
 class AuthRequest(BaseModel):
     username: str
     password: str
@@ -190,14 +180,11 @@ async def login(req: AuthRequest):
 @app.get("/api/transactions/{username}")
 async def get_transactions(username: str):
     conn = get_db()
-    # Fetch all transactions where the user was either the winner or the loser
     rows = conn.execute(
         "SELECT * FROM transactions WHERE winner = ? OR loser = ? ORDER BY id DESC",
         (username, username)
     ).fetchall()
     conn.close()
-
-    # Convert SQLite rows to a list of dictionaries for JSON
     return [dict(row) for row in rows]
 
 def _error(status_code: int, detail: str):
@@ -205,11 +192,10 @@ def _error(status_code: int, detail: str):
     return JSONResponse(status_code=status_code, content={"detail": detail})
 
 # ---------- Game state ----------
-
 class GameState:
     def __init__(self):
-        self.players = {}        # ws -> username
-        self.session_starts = {} # ws -> datetime (IST)
+        self.players = {}
+        self.session_starts = {}
         self.scores = {}
         self.roles = {}
         self.current_toss = 0
@@ -293,7 +279,6 @@ async def handle_flip(ws):
     game.current_toss += 1
     game.pending_guess = None
 
-    # --- NEW: Record the history of this toss ---
     round_winner = guesser if correct else flipper
     game.flip_history.append({
         "toss": game.current_toss,
@@ -317,7 +302,6 @@ async def handle_flip(ws):
 
     clinched = next((p for p, s in game.scores.items() if s >= WIN_THRESHOLD), None)
 
-    # Game Over Logic Modified for Resolution Phase
     if clinched is not None:
         early = game.current_toss < MAX_TOSSES
         game.current_winner = clinched
@@ -341,7 +325,7 @@ async def handle_flip(ws):
                 "history": game.flip_history
             })
         else:
-            await broadcast({"type": "game_over", "scores": game.scores, "winner": "tie", "early_finish": False, "resolution_pending": False,"history": game.flip_history})
+            await broadcast({"type": "game_over", "scores": game.scores, "winner": "tie", "early_finish": False, "resolution_pending": False, "history": game.flip_history})
             await finish_game(winner=None, tie=True)
 
     await broadcast_state()
@@ -361,7 +345,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     continue
                 if len(game.players) < 2 and player_id not in game.players.values():
                     game.players[websocket] = player_id
-                    game.session_starts[websocket] = get_ist_now() # Track session start
+                    game.session_starts[websocket] = get_ist_now()
                     game.scores.setdefault(player_id, 0)
                     await broadcast({"type": "status", "message": f"{player_id} joined the room!"})
                     try_start_game()
@@ -391,7 +375,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 if player_id and game.roles.get(player_id) == "flipper" and game.pending_guess is not None:
                     asyncio.create_task(handle_flip(websocket))
 
-            # --- NEW: Resolving the Stock Bet ---
             elif mtype == "resolve_bet":
                 if game.resolution_pending:
                     player_id = game.players.get(websocket)
@@ -407,7 +390,6 @@ async def websocket_endpoint(websocket: WebSocket):
 
                         game.resolution_pending = False
 
-                        # 💸 Updated messaging to show the loser is paying the winner!
                         await broadcast({
                             "type": "resolution_complete",
                             "message": f"💸 {game.current_loser} paid ₹{amount} to {game.current_winner} for a share of {stock_name}!"
@@ -426,8 +408,6 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         if websocket in game.players:
             player_id = game.players[websocket]
-
-            # --- NEW: Calculate Time Spent on Disconnect ---
             start_time = game.session_starts.pop(websocket, get_ist_now())
             end_time = get_ist_now()
             duration = int((end_time - start_time).total_seconds())
