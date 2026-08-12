@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import AuthScreen from './AuthScreen';
 import GameRoom from './GameRoom';
 import { useGameWebSocket } from './useGameWebSocket';
+import Dashboard from './Dashboard';
 
 // Create a wrapper component so the hook is only called when logged in
 function MainApp({ player, setPlayer }) {
@@ -47,10 +48,7 @@ function MainApp({ player, setPlayer }) {
           sendPlayAgain={sendPlayAgain}
         />
       ) : (
-        <div className="flex-grow flex flex-col items-center justify-center">
-          <h2 className="text-2xl font-bold mb-2">Dashboard Coming Soon!</h2>
-          <p className="text-textMuted">This is where we will add the Chart.js graphs next.</p>
-        </div>
+        <Dashboard playerId={player.username} lifetimeStats={lifetimeStats} />
       )}
     </div>
   );
