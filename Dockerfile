@@ -10,6 +10,10 @@ RUN npm install
 
 # Copy frontend source code and build it
 COPY frontend/ ./
+
+# ADD THIS LINE to prevent Portainer/VPS memory crashes!
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
 RUN npm run build
 
 # ==========================================

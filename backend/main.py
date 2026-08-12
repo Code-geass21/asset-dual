@@ -325,7 +325,7 @@ async def handle_flip(ws):
         game.resolution_pending = True
         await broadcast({
             "type": "game_over", "scores": game.scores, "winner": clinched,
-            "early_finish": early, "resolution_pending": True, "loser": game.current_loser
+            "early_finish": early, "resolution_pending": True, "loser": game.current_loser,
             "history": game.flip_history
         })
     elif game.current_toss >= MAX_TOSSES:
@@ -337,7 +337,7 @@ async def handle_flip(ws):
             game.resolution_pending = True
             await broadcast({
                 "type": "game_over", "scores": game.scores, "winner": winners[0],
-                "early_finish": False, "resolution_pending": True, "loser": game.current_loser
+                "early_finish": False, "resolution_pending": True, "loser": game.current_loser,
                 "history": game.flip_history
             })
         else:
