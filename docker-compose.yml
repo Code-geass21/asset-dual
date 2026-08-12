@@ -30,4 +30,4 @@ networks:
 
 volumes:
   # Persists the SQLite database (accounts + win/loss records) across restarts
-  coinflip-data:
+  game-data:
