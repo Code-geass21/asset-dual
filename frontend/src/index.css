@@ -4,7 +4,15 @@
 
 @layer base {
   body {
-    @apply bg-background text-textMain flex justify-center items-center min-h-screen m-0 overflow-hidden;
+    /* Replaced the risky @apply rule with bulletproof standard CSS */
+    background-color: #121212;
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    overflow: hidden;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
 }
