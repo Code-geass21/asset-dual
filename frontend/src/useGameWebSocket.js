@@ -15,8 +15,9 @@ export function useGameWebSocket(playerId) {
     winner: null,
     loser: null,
     flipResult: null,
+    flipHistory: [], // Tracks the secret table data
   });
-  
+
   const [lifetimeStats, setLifetimeStats] = useState({});
   const wsRef = useRef(null);
 
@@ -26,7 +27,7 @@ export function useGameWebSocket(playerId) {
     // Connect using the same domain/port the browser is currently on
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
+
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
@@ -38,11 +39,11 @@ export function useGameWebSocket(playerId) {
 
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
-      
+
       switch (message.type) {
         case 'roles':
-          setGameState(prev => ({ 
-            ...prev, 
+          setGameState(prev => ({
+            ...prev,
             roles: message.roles,
             myRole: message.roles[playerId] || null,
             flipResult: null // Reset the coin
@@ -63,15 +64,16 @@ export function useGameWebSocket(playerId) {
             gameOver: message.game_over,
             resolutionPending: message.resolution_pending,
             awaitingGuess: message.awaiting_guess,
+            flipResult: message.awaiting_guess ? null : prev.flipResult,
             statusMessage: getStatusMessage(message, prev.myRole)
           }));
           break;
 
         case 'guess_locked':
-          setGameState(prev => ({ 
-            ...prev, 
-            awaitingGuess: false, 
-            statusMessage: prev.myRole === 'guesser' ? 'Guess locked. Waiting for flip...' : 'Opponent locked guess. FLIP!' 
+          setGameState(prev => ({
+            ...prev,
+            awaitingGuess: false,
+            statusMessage: prev.myRole === 'guesser' ? 'Guess locked. Waiting for flip...' : 'Opponent locked guess. FLIP!'
           }));
           break;
 
@@ -81,6 +83,19 @@ export function useGameWebSocket(playerId) {
             flipResult: message,
             statusMessage: 'Flipping... 🪙'
           }));
+
+          // ADDED: Hide the result and build suspense after the coin finishes spinning!
+          setTimeout(() => {
+            setGameState(prev => {
+              if (prev.flipResult) {
+                return {
+                  ...prev,
+                  statusMessage: `Flip complete! Result secretly recorded 🤫. Ready for next toss...`
+                };
+              }
+              return prev;
+            });
+          }, 3000);
           break;
 
         case 'game_over':
@@ -90,7 +105,9 @@ export function useGameWebSocket(playerId) {
             resolutionPending: message.resolution_pending,
             winner: message.winner,
             loser: message.loser,
-            scores: message.scores
+            scores: message.scores,
+            // ADDED: Capture the history array sent from the backend
+            flipHistory: message.history || []
           }));
           break;
 
@@ -110,7 +127,7 @@ export function useGameWebSocket(playerId) {
         case 'error':
           alert(message.message);
           break;
-          
+
         default:
           break;
       }
@@ -128,7 +145,7 @@ export function useGameWebSocket(playerId) {
     if (!msg.game_started) return 'Waiting for other player...';
     if (msg.resolution_pending) return 'Game frozen for resolution...';
     if (msg.game_over) return 'Game Over!';
-    
+
     if (msg.awaiting_guess) {
       return myRole === 'guesser' ? 'Make your call!' : 'Waiting for guesser...';
     } else {

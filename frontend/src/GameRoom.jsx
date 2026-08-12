@@ -96,46 +96,89 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
             {gameState.winner === 'tie' ? "It's a Tie!" : `${gameState.winner} wins! 🏆`}
           </h2>
 
-          {gameState.resolutionPending && playerId === gameState.loser && (
-            <div className="flex flex-col items-center mt-4 gap-3">
-              <p className="text-[#ffc107] font-bold mb-2">Time to pay up! What stock did you buy for the winner?</p>
-              <input
-                type="text"
-                placeholder="Stock Ticker (e.g., RELIANCE)"
-                value={stockTicker}
-                onChange={(e) => setStockTicker(e.target.value)}
-                className="p-3 bg-black/30 border border-border rounded-lg text-white w-3/4 focus:border-accentBlue focus:outline-none"
-              />
-              <input
-                type="number"
-                placeholder="Amount Sent (₹)"
-                value={stockAmount}
-                onChange={(e) => setStockAmount(e.target.value)}
-                className="p-3 bg-black/30 border border-border rounded-lg text-white w-3/4 focus:border-accentBlue focus:outline-none"
-              />
+          {/* STEP 1: Show the History Table First */}
+          {gameState.flipHistory && gameState.flipHistory.length > 0 ? (
+            <div className="mt-4 flex flex-col items-center animate-fade-in">
+              <p className="text-textMuted mb-4">The secret results have been revealed!</p>
+
+              <div className="w-full overflow-hidden rounded-lg border border-border bg-black/40 mb-6">
+                <table className="w-full text-sm text-center text-textMain">
+                  <thead className="bg-black/60 text-textMuted uppercase text-xs border-b border-border">
+                    <tr>
+                      <th className="px-2 py-3">Toss</th>
+                      <th className="px-2 py-3">Guesser</th>
+                      <th className="px-2 py-3">Guess</th>
+                      <th className="px-2 py-3">Result</th>
+                      <th className="px-2 py-3">Won By</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {gameState.flipHistory.map((h, i) => (
+                      <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                        <td className="px-2 py-3 text-textMuted">#{h.toss}</td>
+                        <td className="px-2 py-3">{h.guesser}</td>
+                        <td className="px-2 py-3 capitalize">{h.guess}</td>
+                        <td className="px-2 py-3 capitalize font-bold text-accentBlue">{h.result}</td>
+                        <td className="px-2 py-3 font-bold text-accentGreen">{h.winner}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
               <button
-                onClick={() => sendResolveBet(stockTicker, parseFloat(stockAmount))}
-                className="bg-accentGreen hover:bg-[#218838] text-white px-6 py-3 rounded-lg font-bold w-3/4 mt-2"
+                onClick={() => {
+                  // Hide the table by clearing it from local state to move to Phase 2
+                  gameState.flipHistory = null;
+                }}
+                className="bg-accentBlue hover:bg-accentHover text-white px-8 py-3 rounded-lg font-bold shadow-lg"
               >
-                Commit Transfer
+                Continue to Resolution
               </button>
             </div>
-          )}
+          ) : (
 
-          {gameState.resolutionPending && playerId === gameState.winner && (
-            <p className="mt-4">You won! Waiting for {gameState.loser} to pay up and gift you a stock...</p>
-          )}
+            /* STEP 2: Show the Investment / Play Again Prompts */
+            <div className="animate-fade-in">
+              {gameState.resolutionPending && playerId === gameState.loser && (
+                <div className="flex flex-col items-center mt-4 gap-3">
+                  <p className="text-[#ffc107] font-bold mb-2">Time to pay up! What stock did you buy for the winner?</p>
+                  <input
+                    type="text"
+                    placeholder="Stock Ticker (e.g., RELIANCE)"
+                    value={stockTicker}
+                    onChange={(e) => setStockTicker(e.target.value)}
+                    className="p-3 bg-black/30 border border-border rounded-lg text-white w-3/4 focus:border-accentBlue focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Amount Sent (₹)"
+                    value={stockAmount}
+                    onChange={(e) => setStockAmount(e.target.value)}
+                    className="p-3 bg-black/30 border border-border rounded-lg text-white w-3/4 focus:border-accentBlue focus:outline-none"
+                  />
+                  <button
+                    onClick={() => sendResolveBet(stockTicker, parseFloat(stockAmount))}
+                    className="bg-accentGreen hover:bg-[#218838] text-white px-6 py-3 rounded-lg font-bold w-3/4 mt-2"
+                  >
+                    Commit Transfer
+                  </button>
+                </div>
+              )}
 
-          {!gameState.resolutionPending && gameState.gameOver && (
-            <button
-              onClick={sendPlayAgain}
-              className="bg-accentBlue hover:bg-accentHover text-white px-6 py-3 rounded-lg font-bold mt-6"
-            >
-              Play Again
-            </button>
+              {gameState.resolutionPending && playerId === gameState.winner && (
+                <p className="mt-4 text-lg">Waiting for <span className="font-bold text-accentBlue">{gameState.loser}</span> to pay up and gift you a stock...</p>
+              )}
+
+              {!gameState.resolutionPending && gameState.gameOver && (
+                <button
+                  onClick={sendPlayAgain}
+                  className="bg-accentBlue hover:bg-accentHover text-white px-8 py-3 rounded-lg font-bold mt-6 shadow-lg"
+                >
+                  Play Again
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
-    </div>
-  );
-}

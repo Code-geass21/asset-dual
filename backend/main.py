@@ -219,6 +219,7 @@ class GameState:
         self.resolution_pending = False
         self.current_winner = None
         self.current_loser = None
+        self.flip_history = []
 
     def new_round_setup(self):
         import random
@@ -233,6 +234,7 @@ class GameState:
         self.resolution_pending = False
         self.current_winner = None
         self.current_loser = None
+        self.flip_history = []
 
 game = GameState()
 
@@ -291,6 +293,16 @@ async def handle_flip(ws):
     game.current_toss += 1
     game.pending_guess = None
 
+    # --- NEW: Record the history of this toss ---
+    round_winner = guesser if correct else flipper
+    game.flip_history.append({
+        "toss": game.current_toss,
+        "guesser": guesser,
+        "guess": guess,
+        "result": result,
+        "winner": round_winner
+    })
+
     await broadcast({
         "type": "flip_result",
         "result": result,
@@ -314,6 +326,7 @@ async def handle_flip(ws):
         await broadcast({
             "type": "game_over", "scores": game.scores, "winner": clinched,
             "early_finish": early, "resolution_pending": True, "loser": game.current_loser
+            "history": game.flip_history
         })
     elif game.current_toss >= MAX_TOSSES:
         top_score = max(game.scores.values())
@@ -325,9 +338,10 @@ async def handle_flip(ws):
             await broadcast({
                 "type": "game_over", "scores": game.scores, "winner": winners[0],
                 "early_finish": False, "resolution_pending": True, "loser": game.current_loser
+                "history": game.flip_history
             })
         else:
-            await broadcast({"type": "game_over", "scores": game.scores, "winner": "tie", "early_finish": False, "resolution_pending": False})
+            await broadcast({"type": "game_over", "scores": game.scores, "winner": "tie", "early_finish": False, "resolution_pending": False,"history": game.flip_history})
             await finish_game(winner=None, tie=True)
 
     await broadcast_state()
