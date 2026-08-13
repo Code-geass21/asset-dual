@@ -153,9 +153,10 @@ def record_session(username: str, start_time: datetime, end_time: datetime, dura
 init_db()
 
 # ---------- Auth API ----------
-class AuthRequest(BaseModel):
+class ChangePasswordRequest(BaseModel):
     username: str
-    password: str
+    old_password: str
+    new_password: str
 
 @app.post("/api/register")
 async def register(req: AuthRequest):
@@ -176,6 +177,31 @@ async def login(req: AuthRequest):
     if not check_login(username, password):
         return _error(401, "Invalid username or password.")
     return {"username": username, "stats": get_user_stats(username)}
+
+@app.post("/api/change-password")
+async def change_password(req: ChangePasswordRequest):
+    username = req.username.strip()
+
+    # Verify the old password is correct
+    if not check_login(username, req.old_password):
+        return _error(401, "Incorrect current password.")
+
+    if len(req.new_password) < 4:
+        return _error(400, "New password must be at least 4 characters.")
+
+    # Generate new salt and hash
+    salt_hex, hash_hex = hash_password(req.new_password)
+
+    # Update the database
+    conn = get_db()
+    conn.execute(
+        "UPDATE users SET salt = ?, password_hash = ? WHERE username = ?",
+        (salt_hex, hash_hex, username)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"detail": "Password updated successfully!"}
 
 @app.get("/api/transactions/{username}")
 async def get_transactions(username: str):
