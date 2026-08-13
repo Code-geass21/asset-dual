@@ -38,10 +38,10 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   // ==========================================
   if (!gameState.gameStarted && !gameState.gameOver) {
     return (
-      <div className="flex flex-col flex-grow items-center justify-center w-full animate-fade-in py-12">
-        <div className="text-8xl mb-6 animate-bounce">🪙</div>
-        <h2 className="text-3xl font-bold text-white mb-2 text-center">Waiting for Challenger...</h2>
-        <p className="text-textMuted text-lg text-center">Another player needs to log in to begin.</p>
+      <div className="flex flex-col flex-grow items-center justify-center w-full h-full animate-fade-in py-12">
+        <div className="text-7xl sm:text-8xl mb-6 animate-bounce">🪙</div>
+        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 text-center">Waiting for Challenger...</h2>
+        <p className="text-textMuted text-base sm:text-lg text-center">Another player needs to log in to begin.</p>
       </div>
     );
   }
@@ -51,33 +51,32 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   // ==========================================
   if (isGameFinished && !viewedHistory) {
     return (
-      <div className="flex flex-col flex-grow items-center justify-center w-full max-w-2xl mx-auto p-4 animate-fade-in h-full">
-        <div className="glass-panel w-full p-4 sm:p-6 rounded-xl flex flex-col max-h-full">
+      <div className="flex flex-col flex-grow items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in h-full">
+        <div className="glass-panel w-full p-4 sm:p-6 rounded-2xl flex flex-col h-full max-h-[80vh]">
           <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-center">
             {gameState.winner === 'tie' ? "It's a Tie!" : gameState.winner + " wins! 🏆"}
           </h2>
           <p className="text-textMuted mb-4 text-center text-sm sm:text-base">The secret results have been revealed!</p>
 
-          <div className="w-full overflow-y-auto rounded-lg border border-border bg-black/40 mb-6 flex-grow hide-scrollbar" style={{ maxHeight: '50vh' }}>
-            {/* Table text dynamically shrinks on mobile! */}
+          <div className="w-full overflow-y-auto rounded-xl border border-border bg-black/40 mb-4 flex-grow hide-scrollbar">
             <table className="w-full table-fixed text-xs sm:text-sm text-center text-textMain relative">
               <thead className="bg-black/80 text-textMuted uppercase text-[10px] sm:text-xs border-b border-border sticky top-0 z-10">
                 <tr>
-                  <th className="p-1 sm:p-2 w-1/5">Toss</th>
-                  <th className="p-1 sm:p-2 w-1/5">Guesser</th>
-                  <th className="p-1 sm:p-2 w-1/5">Guess</th>
-                  <th className="p-1 sm:p-2 w-1/5">Result</th>
-                  <th className="p-1 sm:p-2 w-1/5">Won By</th>
+                  <th className="p-2 w-1/5">Toss</th>
+                  <th className="p-2 w-1/5">Guesser</th>
+                  <th className="p-2 w-1/5">Guess</th>
+                  <th className="p-2 w-1/5">Result</th>
+                  <th className="p-2 w-1/5">Won By</th>
                 </tr>
               </thead>
               <tbody>
                 {gameState.flipHistory && gameState.flipHistory.map((h, i) => (
                   <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                    <td className="p-1 sm:p-2 text-textMuted truncate">#{h.toss}</td>
-                    <td className="p-1 sm:p-2 truncate">{h.guesser}</td>
-                    <td className="p-1 sm:p-2 capitalize truncate">{h.guess}</td>
-                    <td className="p-1 sm:p-2 capitalize font-bold text-accentBlue truncate">{h.result}</td>
-                    <td className="p-1 sm:p-2 font-bold text-accentGreen truncate">{h.winner}</td>
+                    <td className="p-2 text-textMuted truncate">#{h.toss}</td>
+                    <td className="p-2 truncate">{h.guesser}</td>
+                    <td className="p-2 capitalize truncate">{h.guess}</td>
+                    <td className="p-2 capitalize font-bold text-accentBlue truncate">{h.result}</td>
+                    <td className="p-2 font-bold text-accentGreen truncate">{h.winner}</td>
                   </tr>
                 ))}
               </tbody>
@@ -86,7 +85,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
           <button
             onClick={() => setViewedHistory(true)}
-            className="bg-accentBlue hover:bg-accentHover text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full transition-transform active:scale-95 text-sm sm:text-base"
+            className="bg-accentBlue hover:bg-accentHover text-white py-3 rounded-xl font-bold shadow-lg w-full transition-transform active:scale-95 text-sm sm:text-base shrink-0"
           >
             Continue to Resolution
           </button>
@@ -102,38 +101,37 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
     return (
       <div className="flex flex-col flex-grow items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in h-full">
 
-        {/* DYNAMIC SCOREBOARD: Flex-1 ensures perfect centering, truncate prevents squeezing */}
-        <div className="glass-panel w-full flex justify-between items-center p-3 sm:p-4 rounded-xl mb-6 gap-2">
+        <div className="glass-panel w-full flex justify-between items-center p-3 sm:p-4 rounded-xl mb-4 shrink-0 gap-2">
           <div className="text-sm sm:text-xl font-bold text-accentGreen flex-1 truncate text-left">{playerA}: {gameState.scores[playerA] || 0}</div>
           <div className="text-xs sm:text-base text-textMuted font-bold whitespace-nowrap px-1">FINAL SCORE</div>
           <div className="text-sm sm:text-xl font-bold text-accentGreen flex-1 truncate text-right">{playerB}: {gameState.scores[playerB] || 0}</div>
         </div>
 
-        <div className="glass-panel w-full p-6 sm:p-8 rounded-xl text-center">
+        <div className="glass-panel w-full p-6 sm:p-8 rounded-2xl text-center flex flex-col justify-center flex-grow">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6">
             {gameState.winner === 'tie' ? "Match Drawn" : gameState.winner + " is the Champion!"}
           </h2>
 
           {gameState.resolutionPending && playerId === gameState.loser && (
-            <div className="flex flex-col items-center gap-4">
-              <p className="text-[#ffc107] font-bold text-base sm:text-lg mb-2">Time to pay up! What stock did you buy for the winner?</p>
+            <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto">
+              <p className="text-[#ffc107] font-bold text-sm sm:text-base mb-1">Time to pay up! What stock did you buy for the winner?</p>
               <input
                 type="text"
                 placeholder="Stock Ticker (e.g., RELIANCE)"
                 value={stockTicker}
                 onChange={(e) => setStockTicker(e.target.value)}
-                className="p-3 sm:p-4 bg-black/30 border border-border rounded-lg text-white w-full focus:border-accentBlue focus:outline-none text-base sm:text-lg"
+                className="p-3 bg-black/30 border border-border rounded-xl text-white w-full focus:border-accentBlue focus:outline-none text-base"
               />
               <input
                 type="number"
                 placeholder="Amount Sent (₹)"
                 value={stockAmount}
                 onChange={(e) => setStockAmount(e.target.value)}
-                className="p-3 sm:p-4 bg-black/30 border border-border rounded-lg text-white w-full focus:border-accentBlue focus:outline-none text-base sm:text-lg"
+                className="p-3 bg-black/30 border border-border rounded-xl text-white w-full focus:border-accentBlue focus:outline-none text-base"
               />
               <button
                 onClick={() => sendResolveBet(stockTicker, parseFloat(stockAmount))}
-                className="bg-accentGreen hover:bg-[#218838] text-white px-6 py-3 sm:py-4 rounded-lg font-bold w-full mt-2 sm:mt-4 text-base sm:text-lg shadow-[0_4px_15px_rgba(40,167,69,0.3)] transition-transform active:scale-95"
+                className="bg-accentGreen hover:bg-[#218838] text-white py-3 rounded-xl font-bold w-full mt-2 text-base shadow-[0_4px_15px_rgba(40,167,69,0.3)] transition-transform active:scale-95"
               >
                 Commit Transfer 💸
               </button>
@@ -141,20 +139,20 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
           )}
 
           {gameState.resolutionPending && playerId === gameState.winner && (
-            <div className="p-4 sm:p-8">
-              <p className="text-lg sm:text-xl">Waiting for <span className="font-bold text-accentBlue">{gameState.loser}</span> to pay up and gift you a stock...</p>
-              <div className="mt-6 animate-spin-slow text-4xl">⏳</div>
+            <div className="p-4">
+              <p className="text-base sm:text-xl">Waiting for <span className="font-bold text-accentBlue">{gameState.loser}</span> to pay up and gift you a stock...</p>
+              <div className="mt-4 animate-spin-slow text-3xl">⏳</div>
             </div>
           )}
 
           {!gameState.resolutionPending && gameState.gameOver && (
-            <div className="flex flex-col items-center mt-6 animate-fade-in">
+            <div className="flex flex-col items-center animate-fade-in">
               {gameState.statusMessage && (
-                <p className="text-accentGreen font-bold mb-6 text-base sm:text-lg">{gameState.statusMessage}</p>
+                <p className="text-accentGreen font-bold mb-4 text-base sm:text-lg">{gameState.statusMessage}</p>
               )}
               <button
                 onClick={sendPlayAgain}
-                className="bg-accentBlue hover:bg-accentHover text-white px-8 sm:px-10 py-3 sm:py-4 rounded-lg font-bold shadow-lg text-lg sm:text-xl transition-transform active:scale-95"
+                className="bg-accentBlue hover:bg-accentHover text-white px-8 py-3 rounded-xl font-bold shadow-lg text-lg transition-transform active:scale-95"
               >
                 Play Again 🔄
               </button>
@@ -166,55 +164,60 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   }
 
   // ==========================================
-  // PHASE 1: ACTIVE GAME UI
+  // PHASE 1: ACTIVE GAME UI (FULLY SPACED OUT)
   // ==========================================
   return (
-    <div className="flex flex-col flex-grow items-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+    <div className="flex flex-col flex-grow items-center justify-between w-full max-w-2xl mx-auto p-2 sm:p-4 h-full animate-fade-in">
 
       {gameState.myRole && (
-        <div className="bg-[#007bff1a] text-[#9fd3ff] p-2 sm:p-3 rounded-lg border border-[#007bff4d] font-bold mb-4 sm:mb-6 w-full text-center text-sm sm:text-base">
+        <div className="bg-[#007bff1a] text-[#9fd3ff] p-2.5 sm:p-3 rounded-xl border border-[#007bff4d] font-bold w-full text-center text-sm sm:text-base shrink-0">
           {gameState.myRole === 'guesser' ? "You are the GUESSER 🤔" : "You are the FLIPPER 🪙"}
         </div>
       )}
 
-      {/* DYNAMIC SCOREBOARD: Names shrink with '...' instead of breaking the layout! */}
-      <div className="glass-panel w-full flex justify-between items-center p-3 sm:p-4 rounded-xl mb-4 sm:mb-6 gap-2">
+      {/* DYNAMIC SCOREBOARD */}
+      <div className="glass-panel w-full flex justify-between items-center p-3 sm:p-4 rounded-xl gap-2 shrink-0 my-2">
         <div className="text-sm sm:text-xl font-bold flex-1 truncate text-left">{playerA}: ?</div>
         <div className="text-xs sm:text-base text-accentBlue font-bold whitespace-nowrap px-1">Toss: {gameState.currentToss}/{gameState.maxTosses}</div>
         <div className="text-sm sm:text-xl font-bold flex-1 truncate text-right">{playerB}: ?</div>
       </div>
 
-      <div id="coin-wrapper" className="my-6 sm:my-8">
-        <div id="coin" style={{ transform: "rotateX(" + flipDegrees + "deg)" }}>
-          <div className="side heads">
-            <div className="coin-rim"></div>
-            <div className="coin-face">
-              <div className="coin-ring"></div>
-              <span className="coin-symbol">👤</span>
+      {/* CENTERED COIN CONTAINER */}
+      <div className="flex-grow flex items-center justify-center my-4 w-full">
+        <div id="coin-wrapper">
+          <div id="coin" style={{ transform: "rotateX(" + flipDegrees + "deg)" }}>
+            <div className="side heads">
+              <div className="coin-rim"></div>
+              <div className="coin-face">
+                <div className="coin-ring"></div>
+                <span className="coin-symbol">👤</span>
+              </div>
             </div>
-          </div>
-          <div className="side tails">
-            <div className="coin-rim"></div>
-            <div className="coin-face">
-              <div className="coin-chakra"></div>
-              <span className="coin-symbol text-3xl">❀</span>
+            <div className="side tails">
+              <div className="coin-rim"></div>
+              <div className="coin-face">
+                <div className="coin-chakra"></div>
+                <span className="coin-symbol text-3xl">❀</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="text-textMuted text-base sm:text-lg mt-2 sm:mt-4 h-[3rem] flex items-center justify-center text-center transition-opacity duration-300">
+      {/* STATUS MESSAGE */}
+      <div className="text-textMuted text-sm sm:text-lg h-[2.5rem] flex items-center justify-center text-center transition-opacity duration-300 shrink-0 mb-2">
         {gameState.statusMessage}
       </div>
 
-      <div className="mt-4 sm:mt-6 w-full flex flex-col items-center justify-center h-[120px]">
+      {/* CONTROLS CONTAINER */}
+      <div className="w-full flex flex-col items-center justify-center h-[110px] shrink-0 pb-2">
 
         {gameState.awaitingGuess && gameState.myRole === 'guesser' && (
-          <div className="flex flex-col items-center gap-3 sm:gap-4 w-full px-4 sm:px-8 animate-fade-in">
-            <p className="text-white text-base sm:text-lg m-0">Your call — heads or tails?</p>
-            <div className="flex gap-3 sm:gap-4 w-full">
-              <button onClick={() => sendGuess('heads')} className="flex-1 bg-accentBlue hover:bg-accentHover text-white px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-bold text-base sm:text-lg transition-transform active:scale-95 shadow-lg">Heads</button>
-              <button onClick={() => sendGuess('tails')} className="flex-1 bg-[#555] hover:bg-[#666] text-white px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-bold text-base sm:text-lg transition-transform active:scale-95 shadow-lg">Tails</button>
+          <div className="flex flex-col items-center gap-2 sm:gap-3 w-full px-2 sm:px-6 animate-fade-in">
+            <p className="text-white text-sm sm:text-base m-0">Your call — heads or tails?</p>
+            <div className="flex gap-3 w-full">
+              <button onClick={() => sendGuess('heads')} className="flex-1 bg-accentBlue hover:bg-accentHover text-white py-3 rounded-xl font-bold text-base transition-transform active:scale-95 shadow-lg">Heads</button>
+              <button onClick={() => sendGuess('tails')} className="flex-1 bg-[#555] hover:bg-[#666] text-white py-3 rounded-xl font-bold text-base transition-transform active:scale-95 shadow-lg">Tails</button>
             </div>
           </div>
         )}
@@ -223,7 +226,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
           <button
             onClick={sendFlip}
             disabled={gameState.flipResult !== null}
-            className="bg-accentGreen hover:bg-[#218838] text-white px-12 sm:px-16 py-4 sm:py-5 rounded-lg font-bold text-lg sm:text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_15px_rgba(40,167,69,0.3)] animate-fade-in transition-transform active:scale-95"
+            className="bg-accentGreen hover:bg-[#218838] text-white px-12 sm:px-16 py-3.5 sm:py-4 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_15px_rgba(40,167,69,0.3)] animate-fade-in transition-transform active:scale-95 w-full sm:w-auto"
           >
             Flip Coin!
           </button>
@@ -231,8 +234,8 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
         {!gameState.awaitingGuess && gameState.myRole === 'guesser' && !isGameFinished && (
            <div className="flex flex-col items-center opacity-50 animate-pulse">
-              <span className="text-2xl sm:text-3xl mb-2">👀</span>
-              <p className="text-sm sm:text-base">Watching opponent...</p>
+              <span className="text-xl sm:text-2xl mb-1">👀</span>
+              <p className="text-xs sm:text-sm">Watching opponent...</p>
            </div>
         )}
       </div>
