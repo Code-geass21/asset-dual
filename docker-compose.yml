@@ -8,7 +8,7 @@ services:
     networks:
       - game-net
     volumes:
-      - game-data:/app/data
+      - asset-dual-data:/app/data
     # By entirely omitting the 'ports' section here, we guarantee this 
     # container is 100% isolated from your host machine's network.
     # It cannot conflict with any existing services.
@@ -30,4 +30,4 @@ networks:
 
 volumes:
   # Persists the SQLite database (accounts + win/loss records) across restarts
-  game-data:
+  asset-dual-data:
