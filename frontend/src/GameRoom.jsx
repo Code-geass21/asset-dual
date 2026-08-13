@@ -21,15 +21,32 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
   const isGameFinished = gameState.resolutionPending || gameState.gameOver;
 
+  // FIXED: Only reset the table view when a brand new game actually starts (Toss 0)
+  // This prevents the 1-millisecond race condition from reverting the UI!
   useEffect(() => {
-    if (!isGameFinished) {
+    if (gameState.currentToss === 0 && !gameState.gameOver) {
       setViewedHistory(false);
+      setStockTicker('');
+      setStockAmount('');
     }
-  }, [isGameFinished]);
+  }, [gameState.currentToss, gameState.gameOver]);
 
   const players = Object.keys(gameState.scores);
   const playerA = players[0] || 'Waiting...';
   const playerB = players[1] || 'Waiting...';
+
+  // ==========================================
+  // PHASE 0: WAITING FOR OPPONENT
+  // ==========================================
+  if (!gameState.gameStarted && !gameState.gameOver) {
+    return (
+      <div className="flex flex-col flex-grow items-center justify-center w-full animate-fade-in py-12">
+        <div className="text-8xl mb-6 animate-bounce">🪙</div>
+        <h2 className="text-3xl font-bold text-white mb-2">Waiting for Challenger...</h2>
+        <p className="text-textMuted text-lg">Another player needs to log in to begin.</p>
+      </div>
+    );
+  }
 
   // ==========================================
   // PHASE 2: THE HISTORY TABLE (Replaces the Coin)
@@ -45,7 +62,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
           {/* Scrollable Container with the scrollbar totally hidden */}
           <div className="w-full overflow-y-auto rounded-lg border border-border bg-black/40 mb-6 flex-grow hide-scrollbar" style={{ maxHeight: '50vh' }}>
-            {/* Added table-fixed so it locks into place without horizontal scrolling */}
             <table className="w-full table-fixed text-sm text-center text-textMain relative">
               <thead className="bg-black/80 text-textMuted uppercase text-xs border-b border-border sticky top-0 z-10">
                 <tr>
@@ -59,7 +75,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
               <tbody>
                 {gameState.flipHistory && gameState.flipHistory.map((h, i) => (
                   <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                    {/* Added truncate so extremely long names add '...' instead of breaking the layout */}
                     <td className="p-2 text-textMuted truncate">#{h.toss}</td>
                     <td className="p-2 truncate">{h.guesser}</td>
                     <td className="p-2 capitalize truncate">{h.guess}</td>
@@ -71,7 +86,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
             </table>
           </div>
 
-          {/* Shrunk the padding and removed the bold arrow */}
           <button
             onClick={() => setViewedHistory(true)}
             className="bg-accentBlue hover:bg-accentHover text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full"

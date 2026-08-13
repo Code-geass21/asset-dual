@@ -10,7 +10,7 @@ function MainApp({ player, setPlayer }) {
   const { gameState, lifetimeStats, sendGuess, sendFlip, sendResolveBet, sendPlayAgain } = useGameWebSocket(player.username);
 
   return (
-    <div className="glass-panel p-6 rounded-2xl w-[95%] max-w-[900px] flex flex-col h-[95vh]">
+    <div className="glass-panel p-6 rounded-2xl w-[95%] max-w-[900px] flex flex-col min-h-[600px] max-h-[95vh]">
       <nav className="flex justify-between border-b border-border pb-4 mb-6">
         <div className="flex gap-4">
           <button
