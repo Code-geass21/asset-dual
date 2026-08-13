@@ -43,37 +43,40 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
           </h2>
           <p className="text-textMuted mb-4 text-center">The secret results have been revealed!</p>
 
-          {/* Scrollable Container so you NEVER have to zoom out */}
-          <div className="w-full overflow-y-auto rounded-lg border border-border bg-black/40 mb-6 flex-grow" style={{ maxHeight: '50vh' }}>
-            <table className="w-full text-sm text-center text-textMain relative">
+          {/* Scrollable Container with the scrollbar totally hidden */}
+          <div className="w-full overflow-y-auto rounded-lg border border-border bg-black/40 mb-6 flex-grow hide-scrollbar" style={{ maxHeight: '50vh' }}>
+            {/* Added table-fixed so it locks into place without horizontal scrolling */}
+            <table className="w-full table-fixed text-sm text-center text-textMain relative">
               <thead className="bg-black/80 text-textMuted uppercase text-xs border-b border-border sticky top-0 z-10">
                 <tr>
-                  <th className="px-2 py-3">Toss</th>
-                  <th className="px-2 py-3">Guesser</th>
-                  <th className="px-2 py-3">Guess</th>
-                  <th className="px-2 py-3">Result</th>
-                  <th className="px-2 py-3">Won By</th>
+                  <th className="p-2 w-1/5">Toss</th>
+                  <th className="p-2 w-1/5">Guesser</th>
+                  <th className="p-2 w-1/5">Guess</th>
+                  <th className="p-2 w-1/5">Result</th>
+                  <th className="p-2 w-1/5">Won By</th>
                 </tr>
               </thead>
               <tbody>
                 {gameState.flipHistory && gameState.flipHistory.map((h, i) => (
                   <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                    <td className="px-2 py-3 text-textMuted">#{h.toss}</td>
-                    <td className="px-2 py-3">{h.guesser}</td>
-                    <td className="px-2 py-3 capitalize">{h.guess}</td>
-                    <td className="px-2 py-3 capitalize font-bold text-accentBlue">{h.result}</td>
-                    <td className="px-2 py-3 font-bold text-accentGreen">{h.winner}</td>
+                    {/* Added truncate so extremely long names add '...' instead of breaking the layout */}
+                    <td className="p-2 text-textMuted truncate">#{h.toss}</td>
+                    <td className="p-2 truncate">{h.guesser}</td>
+                    <td className="p-2 capitalize truncate">{h.guess}</td>
+                    <td className="p-2 capitalize font-bold text-accentBlue truncate">{h.result}</td>
+                    <td className="p-2 font-bold text-accentGreen truncate">{h.winner}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
+          {/* Shrunk the padding and removed the bold arrow */}
           <button
             onClick={() => setViewedHistory(true)}
-            className="bg-accentBlue hover:bg-accentHover text-white px-8 py-4 rounded-lg font-bold shadow-lg w-full text-lg"
+            className="bg-accentBlue hover:bg-accentHover text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full"
           >
-            Continue to Resolution ➡️
+            Continue to Resolution
           </button>
         </div>
       </div>

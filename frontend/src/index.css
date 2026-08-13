@@ -4,7 +4,6 @@
 
 @layer base {
   body {
-    /* Replaced the risky @apply rule with bulletproof standard CSS */
     background-color: #121212;
     color: #ffffff;
     display: flex;
@@ -28,9 +27,18 @@
   .glow-text {
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
   }
+
+  /* NEW: Utility to completely hide scrollbar but keep scroll functionality */
+  .hide-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
 }
 
-/* Premium Custom Scrollbar */
+/* Premium Custom Scrollbar (used on the Dashboard) */
 ::-webkit-scrollbar {
   width: 8px;
 }
