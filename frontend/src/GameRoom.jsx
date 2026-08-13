@@ -4,11 +4,9 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   const [stockTicker, setStockTicker] = useState('');
   const [stockAmount, setStockAmount] = useState('');
 
-  // Manage the 3D coin rotation state locally
   const [flipDegrees, setFlipDegrees] = useState(0);
   const [flipCount, setFlipCount] = useState(0);
 
-  // Trigger the coin spin when the server broadcasts a flip result
   useEffect(() => {
     if (gameState.flipResult) {
       const newCount = flipCount + 1;
@@ -27,23 +25,20 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   return (
     <div className="flex flex-col flex-grow items-center w-full max-w-2xl mx-auto p-4">
 
-      {/* Role Banner */}
       {gameState.myRole && (
         <div className="bg-[#007bff1a] text-[#9fd3ff] p-3 rounded-lg border border-[#007bff4d] font-bold mb-6 w-full text-center">
           {gameState.myRole === 'guesser' ? "You are the GUESSER 🤔" : "You are the FLIPPER 🪙"}
         </div>
       )}
 
-      {/* Scoreboard */}
       <div className="glass-panel w-full flex justify-between items-center p-4 rounded-xl mb-6">
         <div className="text-xl font-bold">{playerA}: {gameState.scores[playerA] || 0}</div>
         <div className="text-accentBlue font-bold">Toss: {gameState.currentToss}/{gameState.maxTosses}</div>
         <div className="text-xl font-bold">{playerB}: {gameState.scores[playerB] || 0}</div>
       </div>
 
-      {/* The 3D Coin */}
       <div id="coin-wrapper">
-        <div id="coin" style={{ transform: `rotateX(${flipDegrees}deg)` }}>
+        <div id="coin" style={{ transform: "rotateX(" + flipDegrees + "deg)" }}>
           <div className="side heads">
             <div className="coin-rim"></div>
             <div className="coin-face">
@@ -61,12 +56,10 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         </div>
       </div>
 
-      {/* Game Status */}
       <div className="text-textMuted text-lg mt-4 min-h-[2rem]">
         {gameState.statusMessage}
       </div>
 
-      {/* Controls */}
       <div className="mt-6 w-full flex flex-col items-center">
         {gameState.awaitingGuess && gameState.myRole === 'guesser' && (
           <div className="flex flex-col items-center gap-3">
@@ -89,14 +82,12 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         )}
       </div>
 
-      {/* Resolution & Game Over Panels */}
       {(gameState.resolutionPending || gameState.gameOver) && (
         <div className="glass-panel mt-8 p-6 rounded-xl w-full text-center">
           <h2 className="text-2xl font-bold mb-2">
-            {gameState.winner === 'tie' ? "It's a Tie!" : `${gameState.winner} wins! 🏆`}
+            {gameState.winner === 'tie' ? "It's a Tie!" : gameState.winner + " wins! 🏆"}
           </h2>
 
-          {/* STEP 1: Show the History Table First */}
           {gameState.flipHistory && gameState.flipHistory.length > 0 ? (
             <div className="mt-4 flex flex-col items-center animate-fade-in">
               <p className="text-textMuted mb-4">The secret results have been revealed!</p>
@@ -128,7 +119,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
               <button
                 onClick={() => {
-                  // Hide the table by clearing it from local state to move to Phase 2
                   gameState.flipHistory = null;
                 }}
                 className="bg-accentBlue hover:bg-accentHover text-white px-8 py-3 rounded-lg font-bold shadow-lg"
@@ -138,7 +128,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
             </div>
           ) : (
 
-            /* STEP 2: Show the Investment / Play Again Prompts */
             <div className="animate-fade-in">
               {gameState.resolutionPending && playerId === gameState.loser && (
                 <div className="flex flex-col items-center mt-4 gap-3">
@@ -182,3 +171,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
           )}
         </div>
       )}
+    </div>
+  );
+}
