@@ -12,25 +12,25 @@ function MainApp({ player, setPlayer }) {
   return (
     <div className="glass-panel p-4 sm:p-6 rounded-2xl w-[95%] max-w-[900px] flex flex-col min-h-[600px] max-h-[95vh]">
 
-      {/* TRULY DYNAMIC NAVBAR: Text, gaps, and padding shrink gracefully on small screens! */}
-      <nav className="flex justify-between items-center border-b border-border pb-3 sm:pb-4 mb-4 sm:mb-6 w-full gap-2">
+      {/* FULLY RESPONSIVE NAVBAR: Uses flex-wrap so borders never clip, and dynamic text sizes! */}
+      <nav className="flex flex-wrap justify-between items-center border-b border-border pb-3 sm:pb-4 mb-4 sm:mb-6 w-full gap-y-3">
         <div className="flex gap-2 sm:gap-4">
           <button
             onClick={() => setActiveTab('game')}
-            className={"pb-1 text-xs sm:text-sm md:text-base whitespace-nowrap transition-colors " + (activeTab === 'game' ? "text-white border-b-2 border-accentBlue" : "text-textMuted hover:text-white")}
+            className={"pb-1 text-sm sm:text-base md:text-lg whitespace-nowrap transition-colors " + (activeTab === 'game' ? "text-white border-b-2 border-accentBlue" : "text-textMuted hover:text-white")}
           >
             🎮 Game Room
           </button>
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={"pb-1 text-xs sm:text-sm md:text-base whitespace-nowrap transition-colors " + (activeTab === 'dashboard' ? "text-white border-b-2 border-accentBlue" : "text-textMuted hover:text-white")}
+            className={"pb-1 text-sm sm:text-base md:text-lg whitespace-nowrap transition-colors " + (activeTab === 'dashboard' ? "text-white border-b-2 border-accentBlue" : "text-textMuted hover:text-white")}
           >
             📊 Dashboard
           </button>
         </div>
         <button
           onClick={() => setPlayer(null)}
-          className="border border-danger text-danger px-2 sm:px-4 py-1 rounded hover:bg-danger hover:text-white transition-colors text-xs sm:text-sm md:text-base whitespace-nowrap"
+          className="border border-danger text-danger px-3 sm:px-4 py-1 rounded hover:bg-danger hover:text-white transition-colors text-xs sm:text-sm md:text-base whitespace-nowrap"
         >
           Log Out
         </button>
