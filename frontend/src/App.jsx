@@ -67,7 +67,6 @@ function MainApp({ player, setPlayer }) {
   };
 
   return (
-    // FIXED: Using h-full on mobile so it seamlessly spans edge-to-edge
     <div className="glass-panel w-full sm:w-[95%] h-full sm:h-[90vh] sm:max-h-[1000px] max-w-[1200px] flex flex-col p-4 sm:p-6 sm:rounded-3xl border-0 sm:border relative overflow-hidden">
 
       <nav className="flex justify-between items-center border-b border-border pb-2 sm:pb-4 mb-4 sm:mb-6 w-full shrink-0">
@@ -106,8 +105,8 @@ function MainApp({ player, setPlayer }) {
         </div>
       </nav>
 
-      {/* FIXED: Added 'flex flex-col' so the GameRoom component can successfully inherit flex-grow and stretch to the bottom! */}
-      <div className="flex-grow flex flex-col overflow-y-auto hide-scrollbar relative w-full h-full">
+      {/* THE MAGIC FIX: flex-1 and min-h-0 force the scroll container to pass its height down properly! */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-y-auto hide-scrollbar relative w-full">
         {activeTab === 'game' ? (
           <GameRoom
             playerId={player.username}
@@ -190,7 +189,6 @@ export default function App() {
   const [player, setPlayer] = useState(null);
 
   return (
-    // FIXED: Locked the outermost container to exactly 100dvh so it touches the physical edges of the phone
     <div className="w-full h-[100dvh] flex justify-center items-center">
       {!player ? (
         <AuthScreen onAuthSuccess={setPlayer} />
