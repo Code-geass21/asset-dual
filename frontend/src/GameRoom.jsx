@@ -21,8 +21,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
   const isGameFinished = gameState.resolutionPending || gameState.gameOver;
 
-  // FIXED: Only reset the table view when a brand new game actually starts (Toss 0)
-  // This prevents the 1-millisecond race condition from reverting the UI!
   useEffect(() => {
     if (gameState.currentToss === 0 && !gameState.gameOver) {
       setViewedHistory(false);
@@ -42,14 +40,14 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
     return (
       <div className="flex flex-col flex-grow items-center justify-center w-full animate-fade-in py-12">
         <div className="text-8xl mb-6 animate-bounce">🪙</div>
-        <h2 className="text-3xl font-bold text-white mb-2">Waiting for Challenger...</h2>
-        <p className="text-textMuted text-lg">Another player needs to log in to begin.</p>
+        <h2 className="text-3xl font-bold text-white mb-2 text-center">Waiting for Challenger...</h2>
+        <p className="text-textMuted text-lg text-center">Another player needs to log in to begin.</p>
       </div>
     );
   }
 
   // ==========================================
-  // PHASE 2: THE HISTORY TABLE (Replaces the Coin)
+  // PHASE 2: THE HISTORY TABLE
   // ==========================================
   if (isGameFinished && !viewedHistory) {
     return (
@@ -60,7 +58,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
           </h2>
           <p className="text-textMuted mb-4 text-center">The secret results have been revealed!</p>
 
-          {/* Scrollable Container with the scrollbar totally hidden */}
           <div className="w-full overflow-y-auto rounded-lg border border-border bg-black/40 mb-6 flex-grow hide-scrollbar" style={{ maxHeight: '50vh' }}>
             <table className="w-full table-fixed text-sm text-center text-textMain relative">
               <thead className="bg-black/80 text-textMuted uppercase text-xs border-b border-border sticky top-0 z-10">
@@ -88,7 +85,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
           <button
             onClick={() => setViewedHistory(true)}
-            className="bg-accentBlue hover:bg-accentHover text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full"
+            className="bg-accentBlue hover:bg-accentHover text-white px-6 py-3 rounded-lg font-bold shadow-lg w-full transition-transform active:scale-95"
           >
             Continue to Resolution
           </button>
@@ -98,13 +95,12 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   }
 
   // ==========================================
-  // PHASE 3: RESOLUTION & PLAY AGAIN (Replaces the Table)
+  // PHASE 3: RESOLUTION & PLAY AGAIN
   // ==========================================
   if (isGameFinished && viewedHistory) {
     return (
       <div className="flex flex-col flex-grow items-center justify-center w-full max-w-2xl mx-auto p-4 animate-fade-in h-full">
 
-        {/* The true final scores are finally revealed here! */}
         <div className="glass-panel w-full flex justify-between items-center p-4 rounded-xl mb-6">
           <div className="text-xl font-bold text-accentGreen">{playerA}: {gameState.scores[playerA] || 0}</div>
           <div className="text-textMuted font-bold">FINAL SCORE</div>
@@ -135,7 +131,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
               />
               <button
                 onClick={() => sendResolveBet(stockTicker, parseFloat(stockAmount))}
-                className="bg-accentGreen hover:bg-[#218838] text-white px-6 py-4 rounded-lg font-bold w-full mt-4 text-lg shadow-[0_4px_15px_rgba(40,167,69,0.3)]"
+                className="bg-accentGreen hover:bg-[#218838] text-white px-6 py-4 rounded-lg font-bold w-full mt-4 text-lg shadow-[0_4px_15px_rgba(40,167,69,0.3)] transition-transform active:scale-95"
               >
                 Commit Transfer 💸
               </button>
@@ -150,13 +146,13 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
           )}
 
           {!gameState.resolutionPending && gameState.gameOver && (
-            <div className="flex flex-col items-center mt-6">
+            <div className="flex flex-col items-center mt-6 animate-fade-in">
               {gameState.statusMessage && (
                 <p className="text-accentGreen font-bold mb-6 text-lg">{gameState.statusMessage}</p>
               )}
               <button
                 onClick={sendPlayAgain}
-                className="bg-accentBlue hover:bg-accentHover text-white px-10 py-4 rounded-lg font-bold shadow-lg text-xl"
+                className="bg-accentBlue hover:bg-accentHover text-white px-10 py-4 rounded-lg font-bold shadow-lg text-xl transition-transform active:scale-95"
               >
                 Play Again 🔄
               </button>
@@ -179,7 +175,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         </div>
       )}
 
-      {/* Secret Scoreboard! */}
       <div className="glass-panel w-full flex justify-between items-center p-4 rounded-xl mb-6">
         <div className="text-xl font-bold">{playerA}: ?</div>
         <div className="text-accentBlue font-bold">Toss: {gameState.currentToss}/{gameState.maxTosses}</div>
@@ -205,17 +200,20 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         </div>
       </div>
 
-      <div className="text-textMuted text-lg mt-4 min-h-[2rem]">
+      {/* FIXED HEIGHT: Prevents flickering/layout shift! */}
+      <div className="text-textMuted text-lg mt-4 h-[3rem] flex items-center justify-center text-center transition-opacity duration-300">
         {gameState.statusMessage}
       </div>
 
-      <div className="mt-8 w-full flex flex-col items-center">
+      {/* FIXED HEIGHT: Prevents UI collapse when buttons disappear */}
+      <div className="mt-6 w-full flex flex-col items-center justify-center h-[120px]">
+
         {gameState.awaitingGuess && gameState.myRole === 'guesser' && (
-          <div className="flex flex-col items-center gap-4 w-full px-8">
-            <p className="text-white text-lg">Your call — heads or tails?</p>
+          <div className="flex flex-col items-center gap-4 w-full px-8 animate-fade-in">
+            <p className="text-white text-lg m-0">Your call — heads or tails?</p>
             <div className="flex gap-4 w-full">
-              <button onClick={() => sendGuess('heads')} className="flex-1 bg-accentBlue hover:bg-accentHover text-white px-6 py-4 rounded-lg font-bold text-lg">Heads</button>
-              <button onClick={() => sendGuess('tails')} className="flex-1 bg-[#555] hover:bg-[#666] text-white px-6 py-4 rounded-lg font-bold text-lg">Tails</button>
+              <button onClick={() => sendGuess('heads')} className="flex-1 bg-accentBlue hover:bg-accentHover text-white px-6 py-4 rounded-lg font-bold text-lg transition-transform active:scale-95 shadow-lg">Heads</button>
+              <button onClick={() => sendGuess('tails')} className="flex-1 bg-[#555] hover:bg-[#666] text-white px-6 py-4 rounded-lg font-bold text-lg transition-transform active:scale-95 shadow-lg">Tails</button>
             </div>
           </div>
         )}
@@ -224,10 +222,18 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
           <button
             onClick={sendFlip}
             disabled={gameState.flipResult !== null}
-            className="bg-accentGreen hover:bg-[#218838] text-white px-12 py-4 rounded-lg font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_15px_rgba(40,167,69,0.3)]"
+            className="bg-accentGreen hover:bg-[#218838] text-white px-16 py-5 rounded-lg font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_15px_rgba(40,167,69,0.3)] animate-fade-in transition-transform active:scale-95"
           >
             Flip Coin!
           </button>
+        )}
+
+        {/* Adds a gentle waiting visual so the space isn't completely empty for the guesser! */}
+        {!gameState.awaitingGuess && gameState.myRole === 'guesser' && !isGameFinished && (
+           <div className="flex flex-col items-center opacity-50 animate-pulse">
+              <span className="text-3xl mb-2">👀</span>
+              <p>Watching opponent...</p>
+           </div>
         )}
       </div>
     </div>
