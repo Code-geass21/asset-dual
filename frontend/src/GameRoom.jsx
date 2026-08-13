@@ -6,8 +6,6 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
   const [flipDegrees, setFlipDegrees] = useState(0);
   const [flipCount, setFlipCount] = useState(0);
-
-  // NEW: Safely tracks if the player has clicked "Continue to Resolution"
   const [viewedHistory, setViewedHistory] = useState(false);
 
   useEffect(() => {
@@ -21,10 +19,8 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
     }
   }, [gameState.flipResult]);
 
-  // NEW: Easy boolean to check if we are in the endgame phase
   const isGameFinished = gameState.resolutionPending || gameState.gameOver;
 
-  // Reset the history table view when a new game starts
   useEffect(() => {
     if (!isGameFinished) {
       setViewedHistory(false);
@@ -35,167 +31,188 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   const playerA = players[0] || 'Waiting...';
   const playerB = players[1] || 'Waiting...';
 
-  return (
-    <div className="flex flex-col flex-grow items-center w-full max-w-2xl mx-auto p-4">
+  // ==========================================
+  // PHASE 2: THE HISTORY TABLE (Replaces the Coin)
+  // ==========================================
+  if (isGameFinished && !viewedHistory) {
+    return (
+      <div className="flex flex-col flex-grow items-center justify-center w-full max-w-2xl mx-auto p-4 animate-fade-in h-full">
+        <div className="glass-panel w-full p-6 rounded-xl flex flex-col max-h-full">
+          <h2 className="text-3xl font-bold mb-2 text-center">
+            {gameState.winner === 'tie' ? "It's a Tie!" : gameState.winner + " wins! 🏆"}
+          </h2>
+          <p className="text-textMuted mb-4 text-center">The secret results have been revealed!</p>
 
-      {/* Hide the Role Banner during the endgame to save vertical space */}
-      {!isGameFinished && gameState.myRole && (
+          {/* Scrollable Container so you NEVER have to zoom out */}
+          <div className="w-full overflow-y-auto rounded-lg border border-border bg-black/40 mb-6 flex-grow" style={{ maxHeight: '50vh' }}>
+            <table className="w-full text-sm text-center text-textMain relative">
+              <thead className="bg-black/80 text-textMuted uppercase text-xs border-b border-border sticky top-0 z-10">
+                <tr>
+                  <th className="px-2 py-3">Toss</th>
+                  <th className="px-2 py-3">Guesser</th>
+                  <th className="px-2 py-3">Guess</th>
+                  <th className="px-2 py-3">Result</th>
+                  <th className="px-2 py-3">Won By</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gameState.flipHistory && gameState.flipHistory.map((h, i) => (
+                  <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                    <td className="px-2 py-3 text-textMuted">#{h.toss}</td>
+                    <td className="px-2 py-3">{h.guesser}</td>
+                    <td className="px-2 py-3 capitalize">{h.guess}</td>
+                    <td className="px-2 py-3 capitalize font-bold text-accentBlue">{h.result}</td>
+                    <td className="px-2 py-3 font-bold text-accentGreen">{h.winner}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <button
+            onClick={() => setViewedHistory(true)}
+            className="bg-accentBlue hover:bg-accentHover text-white px-8 py-4 rounded-lg font-bold shadow-lg w-full text-lg"
+          >
+            Continue to Resolution ➡️
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // PHASE 3: RESOLUTION & PLAY AGAIN (Replaces the Table)
+  // ==========================================
+  if (isGameFinished && viewedHistory) {
+    return (
+      <div className="flex flex-col flex-grow items-center justify-center w-full max-w-2xl mx-auto p-4 animate-fade-in h-full">
+
+        {/* The true final scores are finally revealed here! */}
+        <div className="glass-panel w-full flex justify-between items-center p-4 rounded-xl mb-6">
+          <div className="text-xl font-bold text-accentGreen">{playerA}: {gameState.scores[playerA] || 0}</div>
+          <div className="text-textMuted font-bold">FINAL SCORE</div>
+          <div className="text-xl font-bold text-accentGreen">{playerB}: {gameState.scores[playerB] || 0}</div>
+        </div>
+
+        <div className="glass-panel w-full p-8 rounded-xl text-center">
+          <h2 className="text-3xl font-bold mb-6">
+            {gameState.winner === 'tie' ? "Match Drawn" : gameState.winner + " is the Champion!"}
+          </h2>
+
+          {gameState.resolutionPending && playerId === gameState.loser && (
+            <div className="flex flex-col items-center gap-4">
+              <p className="text-[#ffc107] font-bold text-lg mb-2">Time to pay up! What stock did you buy for the winner?</p>
+              <input
+                type="text"
+                placeholder="Stock Ticker (e.g., RELIANCE)"
+                value={stockTicker}
+                onChange={(e) => setStockTicker(e.target.value)}
+                className="p-4 bg-black/30 border border-border rounded-lg text-white w-full focus:border-accentBlue focus:outline-none text-lg"
+              />
+              <input
+                type="number"
+                placeholder="Amount Sent (₹)"
+                value={stockAmount}
+                onChange={(e) => setStockAmount(e.target.value)}
+                className="p-4 bg-black/30 border border-border rounded-lg text-white w-full focus:border-accentBlue focus:outline-none text-lg"
+              />
+              <button
+                onClick={() => sendResolveBet(stockTicker, parseFloat(stockAmount))}
+                className="bg-accentGreen hover:bg-[#218838] text-white px-6 py-4 rounded-lg font-bold w-full mt-4 text-lg shadow-[0_4px_15px_rgba(40,167,69,0.3)]"
+              >
+                Commit Transfer 💸
+              </button>
+            </div>
+          )}
+
+          {gameState.resolutionPending && playerId === gameState.winner && (
+            <div className="p-8">
+              <p className="text-xl">Waiting for <span className="font-bold text-accentBlue">{gameState.loser}</span> to pay up and gift you a stock...</p>
+              <div className="mt-6 animate-spin-slow text-4xl">⏳</div>
+            </div>
+          )}
+
+          {!gameState.resolutionPending && gameState.gameOver && (
+            <div className="flex flex-col items-center mt-6">
+              {gameState.statusMessage && (
+                <p className="text-accentGreen font-bold mb-6 text-lg">{gameState.statusMessage}</p>
+              )}
+              <button
+                onClick={sendPlayAgain}
+                className="bg-accentBlue hover:bg-accentHover text-white px-10 py-4 rounded-lg font-bold shadow-lg text-xl"
+              >
+                Play Again 🔄
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // PHASE 1: ACTIVE GAME UI
+  // ==========================================
+  return (
+    <div className="flex flex-col flex-grow items-center w-full max-w-2xl mx-auto p-4 animate-fade-in">
+
+      {gameState.myRole && (
         <div className="bg-[#007bff1a] text-[#9fd3ff] p-3 rounded-lg border border-[#007bff4d] font-bold mb-6 w-full text-center">
           {gameState.myRole === 'guesser' ? "You are the GUESSER 🤔" : "You are the FLIPPER 🪙"}
         </div>
       )}
 
-      {/* Scoreboard - Now shows a '?' during the match to maintain suspense! */}
+      {/* Secret Scoreboard! */}
       <div className="glass-panel w-full flex justify-between items-center p-4 rounded-xl mb-6">
-        <div className="text-xl font-bold">
-          {playerA}: {isGameFinished ? (gameState.scores[playerA] || 0) : '?'}
-        </div>
+        <div className="text-xl font-bold">{playerA}: ?</div>
         <div className="text-accentBlue font-bold">Toss: {gameState.currentToss}/{gameState.maxTosses}</div>
-        <div className="text-xl font-bold">
-          {playerB}: {isGameFinished ? (gameState.scores[playerB] || 0) : '?'}
+        <div className="text-xl font-bold">{playerB}: ?</div>
+      </div>
+
+      <div id="coin-wrapper" className="my-8">
+        <div id="coin" style={{ transform: "rotateX(" + flipDegrees + "deg)" }}>
+          <div className="side heads">
+            <div className="coin-rim"></div>
+            <div className="coin-face">
+              <div className="coin-ring"></div>
+              <span className="coin-symbol">👤</span>
+            </div>
+          </div>
+          <div className="side tails">
+            <div className="coin-rim"></div>
+            <div className="coin-face">
+              <div className="coin-chakra"></div>
+              <span className="coin-symbol text-3xl">❀</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ACTIVE GAME UI: The Coin and Controls completely hide when the game is over */}
-      {!isGameFinished && (
-        <>
-          <div id="coin-wrapper">
-            <div id="coin" style={{ transform: "rotateX(" + flipDegrees + "deg)" }}>
-              <div className="side heads">
-                <div className="coin-rim"></div>
-                <div className="coin-face">
-                  <div className="coin-ring"></div>
-                  <span className="coin-symbol">👤</span>
-                </div>
-              </div>
-              <div className="side tails">
-                <div className="coin-rim"></div>
-                <div className="coin-face">
-                  <div className="coin-chakra"></div>
-                  <span className="coin-symbol text-3xl">❀</span>
-                </div>
-              </div>
+      <div className="text-textMuted text-lg mt-4 min-h-[2rem]">
+        {gameState.statusMessage}
+      </div>
+
+      <div className="mt-8 w-full flex flex-col items-center">
+        {gameState.awaitingGuess && gameState.myRole === 'guesser' && (
+          <div className="flex flex-col items-center gap-4 w-full px-8">
+            <p className="text-white text-lg">Your call — heads or tails?</p>
+            <div className="flex gap-4 w-full">
+              <button onClick={() => sendGuess('heads')} className="flex-1 bg-accentBlue hover:bg-accentHover text-white px-6 py-4 rounded-lg font-bold text-lg">Heads</button>
+              <button onClick={() => sendGuess('tails')} className="flex-1 bg-[#555] hover:bg-[#666] text-white px-6 py-4 rounded-lg font-bold text-lg">Tails</button>
             </div>
           </div>
+        )}
 
-          <div className="text-textMuted text-lg mt-4 min-h-[2rem]">
-            {gameState.statusMessage}
-          </div>
-
-          <div className="mt-6 w-full flex flex-col items-center">
-            {gameState.awaitingGuess && gameState.myRole === 'guesser' && (
-              <div className="flex flex-col items-center gap-3">
-                <p className="text-white">Your call — heads or tails?</p>
-                <div className="flex gap-4">
-                  <button onClick={() => sendGuess('heads')} className="bg-accentBlue hover:bg-accentHover text-white px-6 py-2 rounded-lg font-bold">Heads</button>
-                  <button onClick={() => sendGuess('tails')} className="bg-[#555] hover:bg-[#666] text-white px-6 py-2 rounded-lg font-bold">Tails</button>
-                </div>
-              </div>
-            )}
-
-            {!gameState.awaitingGuess && gameState.myRole === 'flipper' && (
-              <button
-                onClick={sendFlip}
-                disabled={gameState.flipResult !== null}
-                className="bg-accentGreen hover:bg-[#218838] text-white px-8 py-3 rounded-lg font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_15px_rgba(40,167,69,0.3)]"
-              >
-                Flip Coin!
-              </button>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* RESOLUTION UI: Replaces the coin and controls entirely */}
-      {isGameFinished && (
-        <div className="glass-panel w-full p-6 rounded-xl text-center mt-2">
-          <h2 className="text-2xl font-bold mb-2">
-            {gameState.winner === 'tie' ? "It's a Tie!" : gameState.winner + " wins! 🏆"}
-          </h2>
-
-          {/* Phase 1: Show the History Table */}
-          {gameState.flipHistory && gameState.flipHistory.length > 0 && !viewedHistory ? (
-            <div className="mt-4 flex flex-col items-center animate-fade-in">
-              <p className="text-textMuted mb-4">The secret results have been revealed!</p>
-
-              <div className="w-full overflow-hidden rounded-lg border border-border bg-black/40 mb-6">
-                <table className="w-full text-sm text-center text-textMain">
-                  <thead className="bg-black/60 text-textMuted uppercase text-xs border-b border-border">
-                    <tr>
-                      <th className="px-2 py-3">Toss</th>
-                      <th className="px-2 py-3">Guesser</th>
-                      <th className="px-2 py-3">Guess</th>
-                      <th className="px-2 py-3">Result</th>
-                      <th className="px-2 py-3">Won By</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {gameState.flipHistory.map((h, i) => (
-                      <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                        <td className="px-2 py-3 text-textMuted">#{h.toss}</td>
-                        <td className="px-2 py-3">{h.guesser}</td>
-                        <td className="px-2 py-3 capitalize">{h.guess}</td>
-                        <td className="px-2 py-3 capitalize font-bold text-accentBlue">{h.result}</td>
-                        <td className="px-2 py-3 font-bold text-accentGreen">{h.winner}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <button
-                onClick={() => setViewedHistory(true)}
-                className="bg-accentBlue hover:bg-accentHover text-white px-8 py-3 rounded-lg font-bold shadow-lg"
-              >
-                Continue to Resolution
-              </button>
-            </div>
-          ) : (
-
-            /* Phase 2: Show the Investment Prompts */
-            <div className="animate-fade-in">
-              {gameState.resolutionPending && playerId === gameState.loser && (
-                <div className="flex flex-col items-center mt-4 gap-3">
-                  <p className="text-[#ffc107] font-bold mb-2">Time to pay up! What stock did you buy for the winner?</p>
-                  <input
-                    type="text"
-                    placeholder="Stock Ticker (e.g., RELIANCE)"
-                    value={stockTicker}
-                    onChange={(e) => setStockTicker(e.target.value)}
-                    className="p-3 bg-black/30 border border-border rounded-lg text-white w-3/4 focus:border-accentBlue focus:outline-none"
-                  />
-                  <input
-                    type="number"
-                    placeholder="Amount Sent (₹)"
-                    value={stockAmount}
-                    onChange={(e) => setStockAmount(e.target.value)}
-                    className="p-3 bg-black/30 border border-border rounded-lg text-white w-3/4 focus:border-accentBlue focus:outline-none"
-                  />
-                  <button
-                    onClick={() => sendResolveBet(stockTicker, parseFloat(stockAmount))}
-                    className="bg-accentGreen hover:bg-[#218838] text-white px-6 py-3 rounded-lg font-bold w-3/4 mt-2"
-                  >
-                    Commit Transfer
-                  </button>
-                </div>
-              )}
-
-              {gameState.resolutionPending && playerId === gameState.winner && (
-                <p className="mt-4 text-lg">Waiting for <span className="font-bold text-accentBlue">{gameState.loser}</span> to pay up and gift you a stock...</p>
-              )}
-
-              {!gameState.resolutionPending && gameState.gameOver && (
-                <button
-                  onClick={sendPlayAgain}
-                  className="bg-accentBlue hover:bg-accentHover text-white px-8 py-3 rounded-lg font-bold mt-6 shadow-lg"
-                >
-                  Play Again
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+        {!gameState.awaitingGuess && gameState.myRole === 'flipper' && (
+          <button
+            onClick={sendFlip}
+            disabled={gameState.flipResult !== null}
+            className="bg-accentGreen hover:bg-[#218838] text-white px-12 py-4 rounded-lg font-bold text-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_15px_rgba(40,167,69,0.3)]"
+          >
+            Flip Coin!
+          </button>
+        )}
+      </div>
     </div>
   );
 }
