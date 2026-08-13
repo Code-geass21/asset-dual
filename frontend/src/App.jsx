@@ -12,6 +12,7 @@ function MainApp({ player, setPlayer }) {
   // Password change states
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [settingsStatus, setSettingsStatus] = useState('');
   const [settingsLoading, setSettingsLoading] = useState(false);
 
@@ -19,8 +20,13 @@ function MainApp({ player, setPlayer }) {
   const currentPlayerStats = lifetimeStats[player.username] || player.stats || {};
 
   const handlePasswordChange = async () => {
-    if (!oldPassword || !newPassword) {
-      setSettingsStatus('Please fill in both fields.');
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      setSettingsStatus('Please fill in all fields.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setSettingsStatus('New passwords do not match.');
       return;
     }
 
@@ -48,6 +54,7 @@ function MainApp({ player, setPlayer }) {
           setShowSettings(false);
           setOldPassword('');
           setNewPassword('');
+          setConfirmPassword('');
           setSettingsStatus('');
         }, 1500);
       }
@@ -133,6 +140,14 @@ function MainApp({ player, setPlayer }) {
               placeholder="New Password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              className="p-3 mb-4 bg-black/30 border border-border rounded-lg text-white w-full focus:outline-none focus:border-accentBlue transition-colors"
+            />
+
+            <input
+              type="password"
+              placeholder="Confirm New Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               className="p-3 mb-6 bg-black/30 border border-border rounded-lg text-white w-full focus:outline-none focus:border-accentBlue transition-colors"
             />
 
@@ -148,6 +163,9 @@ function MainApp({ player, setPlayer }) {
               onClick={() => {
                 setShowSettings(false);
                 setSettingsStatus('');
+                setOldPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
               }}
               className="w-full bg-transparent text-textMuted hover:text-white p-3 rounded-lg font-bold transition-colors"
             >
