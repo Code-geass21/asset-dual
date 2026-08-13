@@ -169,20 +169,20 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   return (
     <div className="flex flex-col flex-grow items-center justify-between w-full max-w-2xl mx-auto p-2 sm:p-4 h-full animate-fade-in">
 
-      {gameState.myRole && (
-        <div className="bg-[#007bff1a] text-[#9fd3ff] p-2.5 sm:p-3 rounded-xl border border-[#007bff4d] font-bold w-full text-center text-sm sm:text-base shrink-0">
-          {gameState.myRole === 'guesser' ? "You are the GUESSER 🤔" : "You are the FLIPPER 🪙"}
-        </div>
-      )}
+      <div className="w-full shrink-0">
+        {gameState.myRole && (
+          <div className="bg-[#007bff1a] text-[#9fd3ff] p-2.5 sm:p-3 rounded-xl border border-[#007bff4d] font-bold w-full text-center text-sm sm:text-base mb-2">
+            {gameState.myRole === 'guesser' ? "You are the GUESSER 🤔" : "You are the FLIPPER 🪙"}
+          </div>
+        )}
 
-      {/* DYNAMIC SCOREBOARD */}
-      <div className="glass-panel w-full flex justify-between items-center p-3 sm:p-4 rounded-xl gap-2 shrink-0 my-2">
-        <div className="text-sm sm:text-xl font-bold flex-1 truncate text-left">{playerA}: ?</div>
-        <div className="text-xs sm:text-base text-accentBlue font-bold whitespace-nowrap px-1">Toss: {gameState.currentToss}/{gameState.maxTosses}</div>
-        <div className="text-sm sm:text-xl font-bold flex-1 truncate text-right">{playerB}: ?</div>
+        <div className="glass-panel w-full flex justify-between items-center p-3 sm:p-4 rounded-xl gap-2">
+          <div className="text-sm sm:text-xl font-bold flex-1 truncate text-left">{playerA}: ?</div>
+          <div className="text-xs sm:text-base text-accentBlue font-bold whitespace-nowrap px-1">Toss: {gameState.currentToss}/{gameState.maxTosses}</div>
+          <div className="text-sm sm:text-xl font-bold flex-1 truncate text-right">{playerB}: ?</div>
+        </div>
       </div>
 
-      {/* CENTERED COIN CONTAINER */}
       <div className="flex-grow flex items-center justify-center my-4 w-full">
         <div id="coin-wrapper">
           <div id="coin" style={{ transform: "rotateX(" + flipDegrees + "deg)" }}>
@@ -204,13 +204,10 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         </div>
       </div>
 
-      {/* STATUS MESSAGE */}
-      <div className="text-textMuted text-sm sm:text-lg h-[2.5rem] flex items-center justify-center text-center transition-opacity duration-300 shrink-0 mb-2">
-        {gameState.statusMessage}
-      </div>
-
-      {/* CONTROLS CONTAINER */}
-      <div className="w-full flex flex-col items-center justify-center h-[110px] shrink-0 pb-2">
+      <div className="w-full flex flex-col items-center justify-center h-[140px] shrink-0 pb-2">
+        <div className="text-textMuted text-sm sm:text-lg h-[2.5rem] flex items-center justify-center text-center transition-opacity duration-300 mb-2">
+          {gameState.statusMessage}
+        </div>
 
         {gameState.awaitingGuess && gameState.myRole === 'guesser' && (
           <div className="flex flex-col items-center gap-2 sm:gap-3 w-full px-2 sm:px-6 animate-fade-in">
