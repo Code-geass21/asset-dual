@@ -81,21 +81,22 @@ export default function Dashboard({ playerId, lifetimeStats }) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="glass-panel p-4 rounded-xl h-64 flex flex-col justify-center items-center">
-           <h3 className="text-sm font-bold uppercase tracking-wider text-textMuted mb-2">Win / Loss Ratio</h3>
+           <h3 className="text-sm font-bold uppercase tracking-wider text-textMuted mb-2 shrink-0">Win / Loss Ratio</h3>
           <div className="relative w-full h-full pb-2">
             <Doughnut data={winLossData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }} />
           </div>
         </div>
         <div className="glass-panel p-4 rounded-xl h-64 flex flex-col justify-center items-center">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-textMuted mb-2">Investment Value</h3>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-textMuted mb-2 shrink-0">Investment Value</h3>
           <div className="relative w-full h-full pb-2">
              <Bar data={investmentData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
           </div>
         </div>
       </div>
 
-      <div className="glass-panel flex flex-col flex-grow p-4 sm:p-6 rounded-xl overflow-hidden min-h-[250px]">
-        <h3 className="text-lg text-white font-bold border-b border-border pb-3 mb-4">Recent Transfers</h3>
+      {/* FIXED HEIGHT CONTAINER: Prevents endless stretching. Scrolls internally with no scrollbars! */}
+      <div className="glass-panel flex flex-col p-4 sm:p-6 rounded-xl overflow-hidden h-[300px] sm:h-[400px]">
+        <h3 className="text-lg text-white font-bold border-b border-border pb-3 mb-4 shrink-0">Recent Transfers</h3>
         <div className="overflow-y-auto pr-2 flex-grow hide-scrollbar">
           {loading ? (
             <p className="text-center text-textMuted py-4">Loading history...</p>
