@@ -166,3 +166,17 @@ function MainApp({ player, setPlayer }) {
     </div>
   );
 }
+
+export default function App() {
+  const [player, setPlayer] = useState(null);
+
+  return (
+    <div className="w-full flex justify-center items-center">
+      {!player ? (
+        <AuthScreen onAuthSuccess={setPlayer} />
+      ) : (
+        <MainApp player={player} setPlayer={setPlayer} />
+      )}
+    </div>
+  );
+}
