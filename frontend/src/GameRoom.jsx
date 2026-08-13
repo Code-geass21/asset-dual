@@ -38,7 +38,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   // ==========================================
   if (!gameState.gameStarted && !gameState.gameOver) {
     return (
-      <div className="flex flex-col flex-1 h-full items-center justify-center w-full animate-fade-in py-12">
+      <div className="flex flex-col flex-1 items-center justify-center w-full animate-fade-in py-12">
         <div className="text-7xl sm:text-8xl mb-6 animate-bounce">🪙</div>
         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 text-center">Waiting for Challenger...</h2>
         <p className="text-textMuted text-base sm:text-lg text-center">Another player needs to log in to begin.</p>
@@ -51,14 +51,14 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   // ==========================================
   if (isGameFinished && !viewedHistory) {
     return (
-      <div className="flex flex-col flex-1 h-full items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
-        <div className="glass-panel w-full p-4 sm:p-6 rounded-2xl flex flex-col h-full max-h-[80vh]">
+      <div className="flex flex-col flex-1 items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+        <div className="glass-panel w-full p-4 sm:p-6 rounded-2xl flex flex-col max-h-[80vh]">
           <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-center">
             {gameState.winner === 'tie' ? "It's a Tie!" : gameState.winner + " wins! 🏆"}
           </h2>
           <p className="text-textMuted mb-4 text-center text-sm sm:text-base">The secret results have been revealed!</p>
 
-          <div className="w-full overflow-y-auto rounded-xl border border-border bg-black/40 mb-4 flex-grow hide-scrollbar">
+          <div className="w-full overflow-y-auto rounded-xl border border-border bg-black/40 mb-4 flex-1 min-h-0 hide-scrollbar">
             <table className="w-full table-fixed text-xs sm:text-sm text-center text-textMain relative">
               <thead className="bg-black/80 text-textMuted uppercase text-[10px] sm:text-xs border-b border-border sticky top-0 z-10">
                 <tr>
@@ -99,7 +99,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   // ==========================================
   if (isGameFinished && viewedHistory) {
     return (
-      <div className="flex flex-col flex-1 h-full items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+      <div className="flex flex-col flex-1 items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
 
         <div className="glass-panel w-full flex justify-between items-center p-3 sm:p-4 rounded-xl mb-4 shrink-0 gap-2">
           <div className="text-sm sm:text-xl font-bold text-accentGreen flex-1 truncate text-left">{playerA}: {gameState.scores[playerA] || 0}</div>
@@ -107,7 +107,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
           <div className="text-sm sm:text-xl font-bold text-accentGreen flex-1 truncate text-right">{playerB}: {gameState.scores[playerB] || 0}</div>
         </div>
 
-        <div className="glass-panel w-full p-6 sm:p-8 rounded-2xl text-center flex flex-col justify-center flex-grow">
+        <div className="glass-panel w-full p-6 sm:p-8 rounded-2xl text-center flex flex-col justify-center flex-1">
           <h2 className="text-2xl sm:text-3xl font-bold mb-6">
             {gameState.winner === 'tie' ? "Match Drawn" : gameState.winner + " is the Champion!"}
           </h2>
@@ -167,7 +167,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   // PHASE 1: ACTIVE GAME UI (FULLY SPACED OUT)
   // ==========================================
   return (
-    <div className="flex flex-col flex-1 h-full items-center justify-between w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+    <div className="flex flex-col flex-1 items-center justify-between w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
 
       <div className="w-full shrink-0">
         {gameState.myRole && (
@@ -183,7 +183,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         </div>
       </div>
 
-      <div className="flex-grow flex items-center justify-center my-4 w-full">
+      <div className="flex-1 flex items-center justify-center my-4 w-full">
         <div id="coin-wrapper">
           <div id="coin" style={{ transform: "rotateX(" + flipDegrees + "deg)" }}>
             <div className="side heads">
