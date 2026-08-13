@@ -10,11 +10,15 @@ function MainApp({ player, setPlayer }) {
 
   const { gameState, lifetimeStats, sendGuess, sendFlip, sendResolveBet, sendPlayAgain } = useGameWebSocket(player.username);
 
-  return (
-    <div className="glass-panel p-4 sm:p-6 rounded-2xl w-[95%] max-w-[900px] flex flex-col min-h-[600px] max-h-[95vh]">
+  // FIXED: The websocket sends a dictionary of ALL players. We must extract just YOUR stats!
+  // If the websocket hasn't sent stats yet, we fall back to the initial stats from login.
+  const currentPlayerStats = lifetimeStats[player.username] || player.stats || {};
 
-      {/* PREMIUM NAVBAR: Uses Lucide icons, simpler text, and a clean icon-only exit button */}
-      <nav className="flex justify-between items-center border-b border-border pb-2 sm:pb-4 mb-4 sm:mb-6 w-full">
+  return (
+    // FIXED HEIGHT CONTAINER: Prevents jarring layout shifts between tabs!
+    <div className="glass-panel p-4 sm:p-6 rounded-2xl w-[95%] max-w-[900px] flex flex-col h-[85vh] sm:h-[750px]">
+
+      <nav className="flex justify-between items-center border-b border-border pb-2 sm:pb-4 mb-4 sm:mb-6 w-full shrink-0">
         <div className="flex gap-6 sm:gap-8">
           <button
             onClick={() => setActiveTab('game')}
@@ -41,18 +45,21 @@ function MainApp({ player, setPlayer }) {
         </button>
       </nav>
 
-      {activeTab === 'game' ? (
-        <GameRoom
-          playerId={player.username}
-          gameState={gameState}
-          sendGuess={sendGuess}
-          sendFlip={sendFlip}
-          sendResolveBet={sendResolveBet}
-          sendPlayAgain={sendPlayAgain}
-        />
-      ) : (
-        <Dashboard playerId={player.username} lifetimeStats={lifetimeStats} />
-      )}
+      {/* INNER CONTENT AREA: Takes up remaining height and scrolls smoothly if needed */}
+      <div className="flex-grow overflow-y-auto hide-scrollbar relative">
+        {activeTab === 'game' ? (
+          <GameRoom
+            playerId={player.username}
+            gameState={gameState}
+            sendGuess={sendGuess}
+            sendFlip={sendFlip}
+            sendResolveBet={sendResolveBet}
+            sendPlayAgain={sendPlayAgain}
+          />
+        ) : (
+          <Dashboard playerId={player.username} lifetimeStats={currentPlayerStats} />
+        )}
+      </div>
     </div>
   );
 }

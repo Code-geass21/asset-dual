@@ -2,19 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 
-// Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
-ChartJS.defaults.color = '#a0a0a0'; // Match dark theme text
+ChartJS.defaults.color = '#a0a0a0';
 
 export default function Dashboard({ playerId, lifetimeStats }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch transaction history on mount
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const res = await fetch(`/api/transactions/${playerId}`);
+        const res = await fetch("/api/transactions/" + playerId);
         const data = await res.json();
         setTransactions(data);
       } catch (err) {
@@ -26,13 +24,11 @@ export default function Dashboard({ playerId, lifetimeStats }) {
     fetchTransactions();
   }, [playerId]);
 
-  // Safely extract stats (default to 0 if undefined)
   const wins = lifetimeStats?.wins || 0;
   const losses = lifetimeStats?.losses || 0;
   const ties = lifetimeStats?.ties || 0;
   const playTimeMins = Math.floor((lifetimeStats?.total_play_time_seconds || 0) / 60);
 
-  // Calculate total money won and lost for the Bar Chart
   let moneyWon = 0;
   let moneyLost = 0;
   transactions.forEach(t => {
@@ -40,7 +36,6 @@ export default function Dashboard({ playerId, lifetimeStats }) {
     if (t.loser === playerId) moneyLost += t.amount;
   });
 
-  // Chart Configurations
   const winLossData = {
     labels: ['Wins', 'Losses'],
     datasets: [{
@@ -62,52 +57,67 @@ export default function Dashboard({ playerId, lifetimeStats }) {
   };
 
   return (
-    <div className="flex flex-col flex-grow w-full max-w-4xl mx-auto overflow-hidden">
-      <h2 className="text-2xl font-bold mb-4">Your Investment Journey</h2>
+    <div className="flex flex-col w-full max-w-3xl mx-auto animate-fade-in p-2 pb-6">
 
-      {/* Lifetime Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 text-left mb-6 bg-black/25 p-4 rounded-xl border border-border">
-        <div><strong className="text-white">Total Wins:</strong> {wins}</div>
-        <div><strong className="text-white">Total Losses:</strong> {losses}</div>
-        <div><strong className="text-white">Ties:</strong> {ties}</div>
-        <div><strong className="text-white">Playtime:</strong> {playTimeMins} mins</div>
+      {/* UPGRADED PREMIUM STATS GRID */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="glass-panel p-4 rounded-xl text-center shadow-lg">
+          <div className="text-3xl font-bold text-accentGreen">{wins}</div>
+          <div className="text-textMuted text-sm font-semibold uppercase tracking-wider mt-1">Wins</div>
+        </div>
+        <div className="glass-panel p-4 rounded-xl text-center shadow-lg">
+          <div className="text-3xl font-bold text-danger">{losses}</div>
+          <div className="text-textMuted text-sm font-semibold uppercase tracking-wider mt-1">Losses</div>
+        </div>
+        <div className="glass-panel p-4 rounded-xl text-center shadow-lg">
+          <div className="text-3xl font-bold text-white">{ties}</div>
+          <div className="text-textMuted text-sm font-semibold uppercase tracking-wider mt-1">Ties</div>
+        </div>
+        <div className="glass-panel p-4 rounded-xl text-center shadow-lg">
+          <div className="text-3xl font-bold text-accentBlue">{playTimeMins}m</div>
+          <div className="text-textMuted text-sm font-semibold uppercase tracking-wider mt-1">Playtime</div>
+        </div>
       </div>
 
-      {/* Charts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-black/25 p-4 rounded-xl border border-border h-64 flex justify-center items-center">
-          <Doughnut data={winLossData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }} />
+        <div className="glass-panel p-4 rounded-xl h-64 flex flex-col justify-center items-center">
+           <h3 className="text-sm font-bold uppercase tracking-wider text-textMuted mb-2">Win / Loss Ratio</h3>
+          <div className="relative w-full h-full pb-2">
+            <Doughnut data={winLossData} options={{ maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }} />
+          </div>
         </div>
-        <div className="bg-black/25 p-4 rounded-xl border border-border h-64 flex justify-center items-center">
-          <Bar data={investmentData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
+        <div className="glass-panel p-4 rounded-xl h-64 flex flex-col justify-center items-center">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-textMuted mb-2">Investment Value</h3>
+          <div className="relative w-full h-full pb-2">
+             <Bar data={investmentData} options={{ maintainAspectRatio: false, plugins: { legend: { display: false } } }} />
+          </div>
         </div>
       </div>
 
-      {/* Transaction History (Scrollable) */}
-      <div className="flex flex-col flex-grow bg-black/25 p-4 rounded-xl border border-border overflow-hidden">
-        <h3 className="text-lg text-textMuted border-b border-border pb-2 mb-2">Recent Transfers</h3>
-        <div className="overflow-y-auto pr-2 flex-grow">
+      <div className="glass-panel flex flex-col flex-grow p-4 sm:p-6 rounded-xl overflow-hidden min-h-[250px]">
+        <h3 className="text-lg text-white font-bold border-b border-border pb-3 mb-4">Recent Transfers</h3>
+        <div className="overflow-y-auto pr-2 flex-grow hide-scrollbar">
           {loading ? (
-            <p>Loading history...</p>
+            <p className="text-center text-textMuted py-4">Loading history...</p>
           ) : transactions.length === 0 ? (
-            <p>No investments yet. Go win some bets!</p>
+            <p className="text-center text-textMuted py-4">No investments yet. Go win some bets!</p>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-4">
               {transactions.map(t => {
                 const isWinner = t.winner === playerId;
                 return (
-                  <li key={t.id} className="flex justify-between items-center border-b border-white/5 pb-2 last:border-0">
-                    <span>
+                  <li key={t.id} className="flex justify-between items-center border-b border-white/5 pb-3 last:border-0">
+                    <span className="flex flex-col gap-1">
                       {isWinner ? (
-                        <span className="text-accentGreen font-bold">+₹{t.amount} ({t.stock_name})</span>
+                        <span className="text-accentGreen font-bold text-base sm:text-lg">+₹{t.amount} ({t.stock_name})</span>
                       ) : (
-                        <span className="text-danger font-bold">-₹{t.amount} ({t.stock_name})</span>
+                        <span className="text-danger font-bold text-base sm:text-lg">-₹{t.amount} ({t.stock_name})</span>
                       )}
-                      <span className="text-textMain ml-2">
-                        {isWinner ? `from ${t.loser}` : `to ${t.winner}`}
+                      <span className="text-textMuted text-xs sm:text-sm">
+                        {isWinner ? "Received from " + t.loser : "Sent to " + t.winner}
                       </span>
                     </span>
-                    <span className="text-xs text-[#666]">{t.timestamp_ist.split(' ')[0]}</span>
+                    <span className="text-xs text-[#666] font-mono">{t.timestamp_ist.split(' ')[0]}</span>
                   </li>
                 );
               })}
