@@ -12,9 +12,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 app = FastAPI()
-app.mount("/game", StaticFiles(directory="frontend/dist", html=True), name="frontend")
 
-print("=== my-fair-coinflip backend starting — BUILD: Phase 1 (Data & IST) ===", flush=True)
+print("=== my-fair-coinflip backend starting — BUILD: Phase 2 (Responsive & Password) ===", flush=True)
 
 MAX_TOSSES = 10
 WIN_THRESHOLD = (MAX_TOSSES // 2) + 1
@@ -153,6 +152,10 @@ def record_session(username: str, start_time: datetime, end_time: datetime, dura
 init_db()
 
 # ---------- Auth API ----------
+class AuthRequest(BaseModel):
+    username: str
+    password: str
+
 class ChangePasswordRequest(BaseModel):
     username: str
     old_password: str
@@ -181,18 +184,12 @@ async def login(req: AuthRequest):
 @app.post("/api/change-password")
 async def change_password(req: ChangePasswordRequest):
     username = req.username.strip()
-
-    # Verify the old password is correct
     if not check_login(username, req.old_password):
         return _error(401, "Incorrect current password.")
-
     if len(req.new_password) < 4:
         return _error(400, "New password must be at least 4 characters.")
 
-    # Generate new salt and hash
     salt_hex, hash_hex = hash_password(req.new_password)
-
-    # Update the database
     conn = get_db()
     conn.execute(
         "UPDATE users SET salt = ?, password_hash = ? WHERE username = ?",
@@ -200,7 +197,6 @@ async def change_password(req: ChangePasswordRequest):
     )
     conn.commit()
     conn.close()
-
     return {"detail": "Password updated successfully!"}
 
 @app.get("/api/transactions/{username}")
@@ -460,4 +456,5 @@ async def websocket_endpoint(websocket: WebSocket):
             await broadcast_state()
             await broadcast_lifetime_stats()
 
+# CRITICAL: This MUST be the last line of code in the file!
 app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="frontend")
