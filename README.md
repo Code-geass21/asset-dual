@@ -34,17 +34,14 @@
 
 *(Features real-time 3D coin animations, dynamic role assignments, and live score tracking)*
 
-```
-[ See docs/game-room-screenshot.png ]
-
-```
+![Active Game Room](docs/game-room-screenshot.png)
 
 ### 2. Executive Portfolio Dashboard
 
 *(Features live market sync, asset holdings ledger, and win-rate analytics)*
 
-```
-[ See docs/dashboard-screenshot.png ]
+![Executive Portfolio Dashboard](docs/dashboard-screenshot.png)
+
 
 ```
 
