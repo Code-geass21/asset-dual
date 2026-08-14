@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-print("=== my-fair-coinflip backend starting — BUILD: Phase 3 (Yahoo Finance Prep) ===", flush=True)
+print("=== my-fair-coinflip backend starting — BUILD: Phase 4 (Live Portfolio) ===", flush=True)
 
 MAX_TOSSES = 10
 WIN_THRESHOLD = (MAX_TOSSES // 2) + 1
@@ -23,7 +23,6 @@ WIN_THRESHOLD = (MAX_TOSSES // 2) + 1
 DB_DIR = os.environ.get("DB_DIR", "/app/data")
 DB_PATH = os.path.join(DB_DIR, "game.db")
 
-# Set timezone explicitly to Indian Standard Time (IST)
 IST = ZoneInfo("Asia/Kolkata")
 
 def get_ist_now():
@@ -49,7 +48,6 @@ def init_db():
             total_play_time_seconds INTEGER NOT NULL DEFAULT 0
         )
     """)
-    # UPDATED SCHEMA: Tracking precise shares and purchase price instead of just generic amount!
     conn.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -190,13 +188,9 @@ async def change_password(req: ChangePasswordRequest):
         return _error(401, "Incorrect current password.")
     if len(req.new_password) < 4:
         return _error(400, "New password must be at least 4 characters.")
-
     salt_hex, hash_hex = hash_password(req.new_password)
     conn = get_db()
-    conn.execute(
-        "UPDATE users SET salt = ?, password_hash = ? WHERE username = ?",
-        (salt_hex, hash_hex, username)
-    )
+    conn.execute("UPDATE users SET salt = ?, password_hash = ? WHERE username = ?", (salt_hex, hash_hex, username))
     conn.commit()
     conn.close()
     return {"detail": "Password updated successfully!"}
@@ -204,22 +198,16 @@ async def change_password(req: ChangePasswordRequest):
 @app.get("/api/transactions/{username}")
 async def get_transactions(username: str):
     conn = get_db()
-    rows = conn.execute(
-        "SELECT * FROM transactions WHERE winner = ? OR loser = ? ORDER BY id DESC",
-        (username, username)
-    ).fetchall()
+    rows = conn.execute("SELECT * FROM transactions WHERE winner = ? OR loser = ? ORDER BY id DESC", (username, username)).fetchall()
     conn.close()
     return [dict(row) for row in rows]
 
-# NEW: Yahoo Finance Autocomplete API
 @app.get("/api/search-ticker")
 async def search_ticker(q: str):
     if not q or len(q) < 2:
         return []
-
     encoded_query = urllib.parse.quote(q)
     url = "https://query2.finance.yahoo.com/v1/finance/search?q=" + encoded_query + "&quotesCount=5&newsCount=0"
-
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
         with urllib.request.urlopen(req) as response:
@@ -228,15 +216,87 @@ async def search_ticker(q: str):
             results = []
             for quote in quotes:
                 if 'symbol' in quote and 'shortname' in quote:
-                    results.append({
-                        "ticker": quote['symbol'],
-                        "name": quote['shortname'],
-                        "exchange": quote.get('exchange', 'Unknown')
-                    })
+                    results.append({"ticker": quote['symbol'], "name": quote['shortname'], "exchange": quote.get('exchange', 'Unknown')})
             return results
     except Exception as e:
         print("Yahoo Search Error:", e)
         return []
+
+# NEW: Native Lightning-Fast Live Price Fetcher
+def get_live_prices(tickers):
+    if not tickers: return {}
+    try:
+        query = ",".join(tickers)
+        url = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=" + query
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            results = data.get("quoteResponse", {}).get("result", [])
+            return {res["symbol"]: res.get("regularMarketPrice", 0) for res in results}
+    except Exception as e:
+        print("Quote fetch error:", e)
+        return {}
+
+# NEW: The Core Portfolio Engine
+@app.get("/api/portfolio/{username}")
+async def get_portfolio(username: str):
+    conn = get_db()
+    # Find all shares the user has WON
+    rows = conn.execute(
+        "SELECT ticker, stock_name, SUM(shares) as total_shares, SUM(shares * purchase_price) as total_cost "
+        "FROM transactions WHERE winner = ? GROUP BY ticker, stock_name",
+        (username,)
+    ).fetchall()
+    conn.close()
+
+    portfolio = []
+    total_invested = 0.0
+    total_current_value = 0.0
+
+    if not rows:
+        return {"holdings": [], "total_invested": 0, "total_current_value": 0, "total_pl": 0}
+
+    tickers = [row["ticker"] for row in rows]
+    live_prices = get_live_prices(tickers)
+
+    for row in rows:
+        t = row["ticker"]
+        shares = row["total_shares"]
+        cost = row["total_cost"]
+        avg_price = cost / shares if shares > 0 else 0
+
+        # Fallback to purchase price if Yahoo API rate limits us
+        current_price = live_prices.get(t)
+        if not current_price:
+            current_price = avg_price
+
+        current_val = shares * current_price
+        pl = current_val - cost
+
+        total_invested += cost
+        total_current_value += current_val
+
+        portfolio.append({
+            "ticker": t,
+            "stock_name": row["stock_name"],
+            "shares": round(shares, 4),
+            "avg_price": round(avg_price, 2),
+            "current_price": round(current_price, 2),
+            "total_cost": round(cost, 2),
+            "current_value": round(current_val, 2),
+            "pl": round(pl, 2),
+            "pl_percent": round((pl / cost) * 100, 2) if cost > 0 else 0
+        })
+
+    # Sort holdings heavily weighted by value
+    portfolio.sort(key=lambda x: x["current_value"], reverse=True)
+
+    return {
+        "holdings": portfolio,
+        "total_invested": round(total_invested, 2),
+        "total_current_value": round(total_current_value, 2),
+        "total_pl": round(total_current_value - total_invested, 2)
+    }
 
 def _error(status_code: int, detail: str):
     from fastapi.responses import JSONResponse
@@ -430,7 +490,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 if game.resolution_pending:
                     player_id = game.players.get(websocket)
                     if player_id == game.current_loser:
-                        # UPDATED: Now receives ticker, stock_name, shares, and purchase_price
                         ticker = message.get("ticker", "UNKNOWN").upper()
                         stock_name = message.get("stock_name", "Unknown Stock")
                         try:
@@ -444,9 +503,6 @@ async def websocket_endpoint(websocket: WebSocket):
                         await finish_game(winner=game.current_winner)
 
                         game.resolution_pending = False
-
-                        # Calculate total value transferred for the chat message
-                        total_value = shares * purchase_price
 
                         await broadcast({
                             "type": "resolution_complete",
