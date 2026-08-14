@@ -5,6 +5,8 @@ import hashlib
 import hmac
 import os
 import sqlite3
+import urllib.request
+import urllib.parse
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from fastapi import FastAPI, WebSocket
@@ -13,7 +15,7 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-print("=== my-fair-coinflip backend starting — BUILD: Phase 2 (Responsive & Password) ===", flush=True)
+print("=== my-fair-coinflip backend starting — BUILD: Phase 3 (Yahoo Finance Prep) ===", flush=True)
 
 MAX_TOSSES = 10
 WIN_THRESHOLD = (MAX_TOSSES // 2) + 1
@@ -43,20 +45,20 @@ def init_db():
             password_hash TEXT NOT NULL,
             wins INTEGER NOT NULL DEFAULT 0,
             losses INTEGER NOT NULL DEFAULT 0,
-            ties INTEGER NOT NULL DEFAULT 0
+            ties INTEGER NOT NULL DEFAULT 0,
+            total_play_time_seconds INTEGER NOT NULL DEFAULT 0
         )
     """)
-    try:
-        conn.execute("ALTER TABLE users ADD COLUMN total_play_time_seconds INTEGER NOT NULL DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
+    # UPDATED SCHEMA: Tracking precise shares and purchase price instead of just generic amount!
     conn.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             winner TEXT NOT NULL,
             loser TEXT NOT NULL,
+            ticker TEXT NOT NULL,
             stock_name TEXT NOT NULL,
-            amount REAL NOT NULL,
+            shares REAL NOT NULL,
+            purchase_price REAL NOT NULL,
             timestamp_ist TEXT NOT NULL
         )
     """)
@@ -124,12 +126,12 @@ def record_result(winner: str | None, loser: str | None, tie: bool = False):
     conn.commit()
     conn.close()
 
-def record_transaction(winner: str, loser: str, stock_name: str, amount: float):
+def record_transaction(winner: str, loser: str, ticker: str, stock_name: str, shares: float, purchase_price: float):
     conn = get_db()
     timestamp = get_ist_now().strftime("%Y-%m-%d %H:%M:%S")
     conn.execute(
-        "INSERT INTO transactions (winner, loser, stock_name, amount, timestamp_ist) VALUES (?, ?, ?, ?, ?)",
-        (winner, loser, stock_name, amount, timestamp)
+        "INSERT INTO transactions (winner, loser, ticker, stock_name, shares, purchase_price, timestamp_ist) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (winner, loser, ticker, stock_name, shares, purchase_price, timestamp)
     )
     conn.commit()
     conn.close()
@@ -151,7 +153,7 @@ def record_session(username: str, start_time: datetime, end_time: datetime, dura
 
 init_db()
 
-# ---------- Auth API ----------
+# ---------- API Endpoints ----------
 class AuthRequest(BaseModel):
     username: str
     password: str
@@ -208,6 +210,33 @@ async def get_transactions(username: str):
     ).fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+# NEW: Yahoo Finance Autocomplete API
+@app.get("/api/search-ticker")
+async def search_ticker(q: str):
+    if not q or len(q) < 2:
+        return []
+
+    encoded_query = urllib.parse.quote(q)
+    url = "https://query2.finance.yahoo.com/v1/finance/search?q=" + encoded_query + "&quotesCount=5&newsCount=0"
+
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+    try:
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode())
+            quotes = data.get('quotes', [])
+            results = []
+            for quote in quotes:
+                if 'symbol' in quote and 'shortname' in quote:
+                    results.append({
+                        "ticker": quote['symbol'],
+                        "name": quote['shortname'],
+                        "exchange": quote.get('exchange', 'Unknown')
+                    })
+            return results
+    except Exception as e:
+        print("Yahoo Search Error:", e)
+        return []
 
 def _error(status_code: int, detail: str):
     from fastapi.responses import JSONResponse
@@ -369,14 +398,14 @@ async def websocket_endpoint(websocket: WebSocket):
                     game.players[websocket] = player_id
                     game.session_starts[websocket] = get_ist_now()
                     game.scores.setdefault(player_id, 0)
-                    await broadcast({"type": "status", "message": f"{player_id} joined the room!"})
+                    await broadcast({"type": "status", "message": "Joined!"})
                     try_start_game()
                     if game.game_started and game.current_toss == 0:
                         await broadcast({"type": "roles", "roles": game.roles})
                     await broadcast_state()
                     await broadcast_lifetime_stats()
                 else:
-                    await websocket.send_text(json.dumps({"type": "error", "message": "Room full or that account is already in the room"}))
+                    await websocket.send_text(json.dumps({"type": "error", "message": "Room full"}))
                     await websocket.close()
 
             elif mtype == "guess":
@@ -401,20 +430,27 @@ async def websocket_endpoint(websocket: WebSocket):
                 if game.resolution_pending:
                     player_id = game.players.get(websocket)
                     if player_id == game.current_loser:
-                        stock_name = message.get("stock_name", "UNKNOWN").upper()
+                        # UPDATED: Now receives ticker, stock_name, shares, and purchase_price
+                        ticker = message.get("ticker", "UNKNOWN").upper()
+                        stock_name = message.get("stock_name", "Unknown Stock")
                         try:
-                            amount = float(message.get("amount", 0))
+                            shares = float(message.get("shares", 0))
+                            purchase_price = float(message.get("purchase_price", 0))
                         except ValueError:
-                            amount = 0.0
+                            shares = 0.0
+                            purchase_price = 0.0
 
-                        record_transaction(game.current_winner, game.current_loser, stock_name, amount)
+                        record_transaction(game.current_winner, game.current_loser, ticker, stock_name, shares, purchase_price)
                         await finish_game(winner=game.current_winner)
 
                         game.resolution_pending = False
 
+                        # Calculate total value transferred for the chat message
+                        total_value = shares * purchase_price
+
                         await broadcast({
                             "type": "resolution_complete",
-                            "message": f"💸 {game.current_loser} paid ₹{amount} to {game.current_winner} for a share of {stock_name}!"
+                            "message": "Transfer complete! " + str(shares) + " shares of " + ticker + " sent."
                         })
                         await broadcast_state()
 
@@ -422,7 +458,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 if len(game.players) == 2 and game.game_over and not game.resolution_pending:
                     game.new_round_setup()
                     await broadcast({"type": "roles", "roles": game.roles})
-                    await broadcast({"type": "status", "message": "New game! Roles have been reshuffled."})
+                    await broadcast({"type": "status", "message": "New game!"})
                     await broadcast_state()
 
     except Exception:
@@ -449,9 +485,9 @@ async def websocket_endpoint(websocket: WebSocket):
             game.players = remaining_players
 
             if dropped_mid_game:
-                await broadcast({"type": "opponent_dropped", "message": f"🚨 {player_id} left the game early! The match has been reset."})
+                await broadcast({"type": "opponent_dropped", "message": "Opponent left! Match reset."})
             else:
-                await broadcast({"type": "status", "message": f"{player_id} left the room. Waiting for a player to join..."})
+                await broadcast({"type": "status", "message": "Opponent left."})
 
             await broadcast_state()
             await broadcast_lifetime_stats()

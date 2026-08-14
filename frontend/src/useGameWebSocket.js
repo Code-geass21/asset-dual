@@ -24,7 +24,6 @@ export function useGameWebSocket(playerId) {
   useEffect(() => {
     if (!playerId) return;
 
-    // Bulletproof string concatenation (no backticks needed)
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = protocol + '//' + window.location.host + '/ws';
 
@@ -161,9 +160,16 @@ export function useGameWebSocket(playerId) {
     }
   }, []);
 
-  const sendResolveBet = useCallback((stockName, amount) => {
+  // UPDATED: Now sends precise ticker and share data to the Python backend
+  const sendResolveBet = useCallback((ticker, stockName, shares, purchasePrice) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'resolve_bet', stock_name: stockName, amount }));
+      wsRef.current.send(JSON.stringify({
+        type: 'resolve_bet',
+        ticker: ticker,
+        stock_name: stockName,
+        shares: shares,
+        purchase_price: purchasePrice
+      }));
     }
   }, []);
 

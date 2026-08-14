@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
 export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sendResolveBet, sendPlayAgain }) {
-  const [stockTicker, setStockTicker] = useState('');
-  const [stockAmount, setStockAmount] = useState('');
+  // New robust portfolio states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [shares, setShares] = useState('');
+  const [purchasePrice, setPurchasePrice] = useState('');
 
   const [flipDegrees, setFlipDegrees] = useState(0);
   const [flipCount, setFlipCount] = useState(0);
@@ -21,18 +26,48 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
   const isGameFinished = gameState.resolutionPending || gameState.gameOver;
 
+  // Reset resolution states cleanly on new game
   useEffect(() => {
     if (gameState.currentToss === 0 && !gameState.gameOver) {
       setViewedHistory(false);
-      setStockTicker('');
-      setStockAmount('');
+      setSearchQuery('');
+      setSearchResults([]);
+      setSelectedStock(null);
+      setShares('');
+      setPurchasePrice('');
     }
   }, [gameState.currentToss, gameState.gameOver]);
+
+  // Debounced search hook: Pings our FastAPI Yahoo Finance endpoint when user types!
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch('/api/search-ticker?q=' + encodeURIComponent(searchQuery));
+        const data = await res.json();
+        setSearchResults(data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500); // Wait 500ms after user stops typing to ping API
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   const players = Object.keys(gameState.scores);
   const playerA = players[0] || 'Waiting...';
   const playerB = players[1] || 'Waiting...';
 
+  // ==========================================
+  // PHASE 0: WAITING FOR OPPONENT
+  // ==========================================
   if (!gameState.gameStarted && !gameState.gameOver) {
     return (
       <div className="flex flex-col flex-1 h-full w-full items-center justify-center animate-fade-in py-12">
@@ -43,6 +78,9 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
     );
   }
 
+  // ==========================================
+  // PHASE 2: THE HISTORY TABLE
+  // ==========================================
   if (isGameFinished && !viewedHistory) {
     return (
       <div className="flex flex-col flex-1 h-full w-full max-w-2xl mx-auto items-center justify-center animate-fade-in">
@@ -88,6 +126,9 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
     );
   }
 
+  // ==========================================
+  // PHASE 3: RESOLUTION & PLAY AGAIN
+  // ==========================================
   if (isGameFinished && viewedHistory) {
     return (
       <div className="flex flex-col flex-1 h-full w-full max-w-2xl mx-auto items-center justify-center animate-fade-in">
@@ -104,28 +145,86 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
           </h2>
 
           {gameState.resolutionPending && playerId === gameState.loser && (
-            <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto">
-              <p className="text-[#ffc107] font-bold text-sm sm:text-base mb-1">Time to pay up! What stock did you buy for the winner?</p>
-              <input
-                type="text"
-                placeholder="Stock Ticker (e.g., RELIANCE)"
-                value={stockTicker}
-                onChange={(e) => setStockTicker(e.target.value)}
-                className="p-3 bg-black/30 border border-border rounded-xl text-white w-full focus:border-accentBlue focus:outline-none text-base"
-              />
-              <input
-                type="number"
-                placeholder="Amount Sent (₹)"
-                value={stockAmount}
-                onChange={(e) => setStockAmount(e.target.value)}
-                className="p-3 bg-black/30 border border-border rounded-xl text-white w-full focus:border-accentBlue focus:outline-none text-base"
-              />
-              <button
-                onClick={() => sendResolveBet(stockTicker, parseFloat(stockAmount))}
-                className="bg-accentGreen hover:bg-[#218838] text-white py-3 rounded-xl font-bold w-full mt-2 text-base shadow-[0_4px_15px_rgba(40,167,69,0.3)] transition-transform active:scale-95"
-              >
-                Commit Transfer 💸
-              </button>
+            <div className="flex flex-col items-center gap-3 w-full max-w-md mx-auto text-left relative">
+              <p className="text-[#ffc107] font-bold text-sm sm:text-base mb-1 text-center w-full">Time to pay up! Search for a real stock:</p>
+
+              {!selectedStock ? (
+                <div className="w-full relative">
+                  <input
+                    type="text"
+                    placeholder="Search company (e.g., Apple, Reliance)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="p-3 bg-black/30 border border-border rounded-xl text-white w-full focus:border-accentBlue focus:outline-none text-base"
+                  />
+                  {isSearching && <p className="text-textMuted text-xs mt-2 text-center">Searching Live Market...</p>}
+
+                  {searchResults.length > 0 && (
+                    <ul className="absolute z-20 w-full bg-[#1e1e1e] border border-border rounded-xl mt-1 max-h-48 overflow-y-auto shadow-2xl overflow-hidden hide-scrollbar">
+                      {searchResults.map((result, idx) => (
+                        <li
+                          key={idx}
+                          onClick={() => {
+                            setSelectedStock(result);
+                            setSearchResults([]);
+                            setSearchQuery('');
+                          }}
+                          className="p-3 border-b border-border last:border-0 hover:bg-white/10 cursor-pointer transition-colors flex justify-between items-center"
+                        >
+                          <span className="font-bold text-white truncate mr-2 text-sm">{result.name}</span>
+                          <span className="text-xs text-accentBlue font-mono shrink-0">{result.ticker}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full flex flex-col gap-3 animate-fade-in mt-2">
+                  <div className="flex justify-between items-center bg-black/40 p-3 rounded-xl border border-accentBlue/30">
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="text-xs text-textMuted uppercase">Selected Asset</span>
+                      <span className="font-bold text-accentBlue truncate">{selectedStock.name}</span>
+                      <span className="text-xs text-white font-mono">{selectedStock.ticker}</span>
+                    </div>
+                    <button
+                      onClick={() => setSelectedStock(null)}
+                      className="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg transition-colors shrink-0 ml-2"
+                    >
+                      Change
+                    </button>
+                  </div>
+
+                  <input
+                    type="number"
+                    placeholder="Number of Shares (e.g., 2.5)"
+                    value={shares}
+                    onChange={(e) => setShares(e.target.value)}
+                    className="p-3 bg-black/30 border border-border rounded-xl text-white w-full focus:border-accentBlue focus:outline-none text-base"
+                  />
+                  <input
+                    type="number"
+                    placeholder="Purchase Price per Share (₹)"
+                    value={purchasePrice}
+                    onChange={(e) => setPurchasePrice(e.target.value)}
+                    className="p-3 bg-black/30 border border-border rounded-xl text-white w-full focus:border-accentBlue focus:outline-none text-base"
+                  />
+
+                  <div className="flex justify-between items-center px-2 py-1 text-sm bg-black/20 rounded-lg">
+                    <span className="text-textMuted font-bold">Total Transfer Value:</span>
+                    <span className="font-bold text-accentGreen text-lg">
+                      ₹{shares && purchasePrice ? (parseFloat(shares) * parseFloat(purchasePrice)).toFixed(2) : "0.00"}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => sendResolveBet(selectedStock.ticker, selectedStock.name, parseFloat(shares), parseFloat(purchasePrice))}
+                    disabled={!shares || !purchasePrice || parseFloat(shares) <= 0 || parseFloat(purchasePrice) <= 0}
+                    className="bg-accentGreen hover:bg-[#218838] text-white py-3 rounded-xl font-bold w-full mt-2 text-base shadow-[0_4px_15px_rgba(40,167,69,0.3)] transition-transform active:scale-95 disabled:opacity-50"
+                  >
+                    Confirm Investment 💸
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -154,6 +253,9 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
     );
   }
 
+  // ==========================================
+  // PHASE 1: ACTIVE GAME UI (FULLY SPACED OUT)
+  // ==========================================
   return (
     <div className="flex flex-col flex-1 h-full w-full max-w-2xl mx-auto items-center justify-between animate-fade-in pb-2">
 
@@ -192,7 +294,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         </div>
       </div>
 
-      <div className="w-full flex flex-col items-center justify-center h-[140px] shrink-0 pb-2">
+      <div className="w-full flex flex-col items-center justify-center h-[140px] shrink-0">
         <div className="text-textMuted text-sm sm:text-lg h-[2.5rem] flex items-center justify-center text-center transition-opacity duration-300 mb-2 w-full">
           {gameState.statusMessage}
         </div>
