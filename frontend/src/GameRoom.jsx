@@ -33,12 +33,9 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   const playerA = players[0] || 'Waiting...';
   const playerB = players[1] || 'Waiting...';
 
-  // ==========================================
-  // PHASE 0: WAITING FOR OPPONENT
-  // ==========================================
   if (!gameState.gameStarted && !gameState.gameOver) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center w-full animate-fade-in py-12">
+      <div className="flex flex-col flex-1 min-h-full items-center justify-center w-full animate-fade-in py-12">
         <div className="text-7xl sm:text-8xl mb-6 animate-bounce">🪙</div>
         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 text-center">Waiting for Challenger...</h2>
         <p className="text-textMuted text-base sm:text-lg text-center">Another player needs to log in to begin.</p>
@@ -46,12 +43,9 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
     );
   }
 
-  // ==========================================
-  // PHASE 2: THE HISTORY TABLE
-  // ==========================================
   if (isGameFinished && !viewedHistory) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+      <div className="flex flex-col flex-1 min-h-full items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
         <div className="glass-panel w-full p-4 sm:p-6 rounded-2xl flex flex-col max-h-[80vh]">
           <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-center">
             {gameState.winner === 'tie' ? "It's a Tie!" : gameState.winner + " wins! 🏆"}
@@ -94,12 +88,9 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
     );
   }
 
-  // ==========================================
-  // PHASE 3: RESOLUTION & PLAY AGAIN
-  // ==========================================
   if (isGameFinished && viewedHistory) {
     return (
-      <div className="flex flex-col flex-1 items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+      <div className="flex flex-col flex-1 min-h-full items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
 
         <div className="glass-panel w-full flex justify-between items-center p-3 sm:p-4 rounded-xl mb-4 shrink-0 gap-2">
           <div className="text-sm sm:text-xl font-bold text-accentGreen flex-1 truncate text-left">{playerA}: {gameState.scores[playerA] || 0}</div>
@@ -163,11 +154,8 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
     );
   }
 
-  // ==========================================
-  // PHASE 1: ACTIVE GAME UI (FULLY SPACED OUT)
-  // ==========================================
   return (
-    <div className="flex flex-col flex-1 items-center justify-between w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+    <div className="flex flex-col flex-1 min-h-full items-center justify-between w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
 
       <div className="w-full shrink-0">
         {gameState.myRole && (

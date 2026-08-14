@@ -9,7 +9,6 @@ function MainApp({ player, setPlayer }) {
   const [activeTab, setActiveTab] = useState('game');
   const [showSettings, setShowSettings] = useState(false);
 
-  // Password change states
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -105,7 +104,7 @@ function MainApp({ player, setPlayer }) {
         </div>
       </nav>
 
-      {/* THE MAGIC FIX: Removing absolute hack and using flex-1 with min-h-0 stops the width from collapsing! */}
+      {/* FIXED FLUID CONTAINER */}
       <div className="flex-1 min-h-0 flex flex-col overflow-y-auto hide-scrollbar w-full relative">
         {activeTab === 'game' ? (
           <GameRoom
@@ -121,7 +120,6 @@ function MainApp({ player, setPlayer }) {
         )}
       </div>
 
-      {/* SETTINGS MODAL */}
       {showSettings && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm sm:rounded-3xl p-4">
           <div className="glass-panel w-full max-w-sm p-8 rounded-2xl flex flex-col animate-fade-in border border-border shadow-2xl">
@@ -134,7 +132,6 @@ function MainApp({ player, setPlayer }) {
               onChange={(e) => setOldPassword(e.target.value)}
               className="p-3 mb-4 bg-black/30 border border-border rounded-lg text-white w-full focus:outline-none focus:border-accentBlue transition-colors"
             />
-
             <input
               type="password"
               placeholder="New Password"
@@ -142,7 +139,6 @@ function MainApp({ player, setPlayer }) {
               onChange={(e) => setNewPassword(e.target.value)}
               className="p-3 mb-4 bg-black/30 border border-border rounded-lg text-white w-full focus:outline-none focus:border-accentBlue transition-colors"
             />
-
             <input
               type="password"
               placeholder="Confirm New Password"
@@ -158,7 +154,6 @@ function MainApp({ player, setPlayer }) {
             >
               {settingsLoading ? 'Updating...' : 'Save Password'}
             </button>
-
             <button
               onClick={() => {
                 setShowSettings(false);
@@ -180,7 +175,6 @@ function MainApp({ player, setPlayer }) {
           </div>
         </div>
       )}
-
     </div>
   );
 }
@@ -189,7 +183,6 @@ export default function App() {
   const [player, setPlayer] = useState(null);
 
   return (
-    // THE MAGIC FIX 2: Changing w-full to w-screen guarantees the parent is 100vw, making a layout collapse impossible!
     <div className="w-screen h-[100dvh] flex justify-center items-center">
       {!player ? (
         <AuthScreen onAuthSuccess={setPlayer} />
