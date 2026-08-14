@@ -192,7 +192,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         </div>
       </div>
 
-      <div className="w-full flex flex-col items-center justify-center h-[140px] shrink-0">
+      <div className="w-full flex flex-col items-center justify-center h-[140px] shrink-0 pb-2">
         <div className="text-textMuted text-sm sm:text-lg h-[2.5rem] flex items-center justify-center text-center transition-opacity duration-300 mb-2 w-full">
           {gameState.statusMessage}
         </div>

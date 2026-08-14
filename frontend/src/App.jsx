@@ -66,7 +66,7 @@ function MainApp({ player, setPlayer }) {
   };
 
   return (
-    <div className="glass-panel w-full h-full sm:w-[95%] sm:h-[90vh] sm:max-h-[1000px] sm:max-w-[1200px] flex flex-col p-4 sm:p-6 sm:rounded-3xl border-0 sm:border relative overflow-hidden">
+    <div className="glass-panel w-full h-full sm:w-[95%] sm:h-[90vh] sm:max-h-[1000px] sm:max-w-[1200px] flex flex-col p-4 sm:p-6 sm:rounded-3xl border-0 sm:border relative overflow-hidden mx-auto shadow-2xl">
 
       <nav className="flex justify-between items-center border-b border-border pb-2 sm:pb-4 mb-4 sm:mb-6 w-full shrink-0">
         <div className="flex gap-4 sm:gap-8">
@@ -182,7 +182,8 @@ export default function App() {
   const [player, setPlayer] = useState(null);
 
   return (
-    <div className="w-full h-full">
+    // BYPASSING ALL CSS BUGS WITH FIXED INSET-0
+    <div className="fixed inset-0 w-screen h-[100dvh] flex justify-center items-center bg-[#121212] overflow-hidden">
       {!player ? (
         <AuthScreen onAuthSuccess={setPlayer} />
       ) : (
