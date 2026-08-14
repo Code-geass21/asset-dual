@@ -1,4 +1,4 @@
- # Fair Coin Flip & Portfolio Tracker — README
+ # Fair Coin Flip & Portfolio Tracker
 
 > A modern, real-time multiplayer full-stack application that transforms a classic coin-flip game into a simulated fintech portfolio tracker using live market data.
 
