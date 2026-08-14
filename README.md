@@ -42,9 +42,6 @@
 
 ![Executive Portfolio Dashboard](docs/dashboard-screenshot.png)
 
-
-```
-
 ---
 
 ## ⚙️ Local Development & Deployment
