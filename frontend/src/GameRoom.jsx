@@ -35,7 +35,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
   if (!gameState.gameStarted && !gameState.gameOver) {
     return (
-      <div className="flex flex-col flex-1 min-h-full items-center justify-center w-full animate-fade-in py-12">
+      <div className="flex flex-col flex-1 h-full w-full items-center justify-center animate-fade-in py-12">
         <div className="text-7xl sm:text-8xl mb-6 animate-bounce">🪙</div>
         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 text-center">Waiting for Challenger...</h2>
         <p className="text-textMuted text-base sm:text-lg text-center">Another player needs to log in to begin.</p>
@@ -45,7 +45,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
   if (isGameFinished && !viewedHistory) {
     return (
-      <div className="flex flex-col flex-1 min-h-full items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+      <div className="flex flex-col flex-1 h-full w-full max-w-2xl mx-auto items-center justify-center animate-fade-in">
         <div className="glass-panel w-full p-4 sm:p-6 rounded-2xl flex flex-col max-h-[80vh]">
           <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-center">
             {gameState.winner === 'tie' ? "It's a Tie!" : gameState.winner + " wins! 🏆"}
@@ -90,7 +90,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
 
   if (isGameFinished && viewedHistory) {
     return (
-      <div className="flex flex-col flex-1 min-h-full items-center justify-center w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+      <div className="flex flex-col flex-1 h-full w-full max-w-2xl mx-auto items-center justify-center animate-fade-in">
 
         <div className="glass-panel w-full flex justify-between items-center p-3 sm:p-4 rounded-xl mb-4 shrink-0 gap-2">
           <div className="text-sm sm:text-xl font-bold text-accentGreen flex-1 truncate text-left">{playerA}: {gameState.scores[playerA] || 0}</div>
@@ -155,7 +155,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-full items-center justify-between w-full max-w-2xl mx-auto p-2 sm:p-4 animate-fade-in">
+    <div className="flex flex-col flex-1 h-full w-full max-w-2xl mx-auto items-center justify-between animate-fade-in pb-2">
 
       <div className="w-full shrink-0">
         {gameState.myRole && (
@@ -192,8 +192,8 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         </div>
       </div>
 
-      <div className="w-full flex flex-col items-center justify-center h-[140px] shrink-0 pb-2">
-        <div className="text-textMuted text-sm sm:text-lg h-[2.5rem] flex items-center justify-center text-center transition-opacity duration-300 mb-2">
+      <div className="w-full flex flex-col items-center justify-center h-[140px] shrink-0">
+        <div className="text-textMuted text-sm sm:text-lg h-[2.5rem] flex items-center justify-center text-center transition-opacity duration-300 mb-2 w-full">
           {gameState.statusMessage}
         </div>
 
@@ -218,7 +218,7 @@ export default function GameRoom({ playerId, gameState, sendGuess, sendFlip, sen
         )}
 
         {!gameState.awaitingGuess && gameState.myRole === 'guesser' && !isGameFinished && (
-           <div className="flex flex-col items-center opacity-50 animate-pulse">
+           <div className="flex flex-col items-center opacity-50 animate-pulse w-full">
               <span className="text-xl sm:text-2xl mb-1">👀</span>
               <p className="text-xs sm:text-sm">Watching opponent...</p>
            </div>
