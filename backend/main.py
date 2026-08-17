@@ -222,20 +222,28 @@ async def search_ticker(q: str):
         print("Yahoo Search Error:", e)
         return []
 
-# NEW: Native Lightning-Fast Live Price Fetcher
+# NEW: Robust Live Price Fetcher (Bypasses Yahoo 401 Unauthorized Block)
 def get_live_prices(tickers):
     if not tickers: return {}
-    try:
-        query = ",".join(tickers)
-        url = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=" + query
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req) as response:
-            data = json.loads(response.read().decode())
-            results = data.get("quoteResponse", {}).get("result", [])
-            return {res["symbol"]: res.get("regularMarketPrice", 0) for res in results}
-    except Exception as e:
-        print("Quote fetch error:", e)
-        return {}
+
+    import yfinance as yf
+    prices = {}
+
+    for t in tickers:
+        try:
+            # yfinance automatically handles the cookies/crumbs required by Yahoo
+            stock = yf.Ticker(t)
+            data = stock.history(period="1d")
+
+            if not data.empty:
+                prices[t] = float(data['Close'].iloc[-1])
+            else:
+                prices[t] = 0.0
+
+        except Exception as e:
+            print(f"Quote fetch error for {t}:", e)
+
+    return prices
 
 # NEW: The Core Portfolio Engine
 @app.get("/api/portfolio/{username}")
